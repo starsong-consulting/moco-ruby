@@ -1,0 +1,9 @@
+match_thresholds:
+  project: 0.80
+  task: 0.45
+
+instances:
+  "my-own-moco-subdomain":
+    api_key: 1234abcdef
+  "some-target-subdomain":
+    api_key: 1234abcdef
