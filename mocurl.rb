@@ -5,9 +5,10 @@ require 'yaml'
 require 'json'
 require_relative 'lib/moco'
 
-options = { method: 'GET', data: {}, api_key: nil }
+options = { method: 'GET', data: {}, api_key: nil, no_format: false, verbose: false }
 OptionParser.new do |opts|
-  opts.banner = 'Usage: mocurl [-X method] [-d data] [-a api_key] url'
+  opts.banner = "Usage: #{$0} [options] url\n" +
+                "       #{$0} [options] subdomain path"
 
   opts.on('-X', '--method METHOD', 'Set HTTP method to use') do |method|
     options[:method] = method.upcase
@@ -17,12 +18,21 @@ OptionParser.new do |opts|
     options[:data] = JSON.parse(data)
   end
 
-  opts.on('-a', '--api-key API_KEY', 'API Key (overrides config)') do |key|
+  opts.on('-a', '--api-key API_KEY', 'Manually specify MOCO API key') do |key|
     options[:api_key] = key
   end
 
-  opts.on('-n', '--no-format', 'Disable JSON formatting') do
+  opts.on('-n', '--no-format', 'Disable JSON pretty-printing') do
     options[:no_format] = true
+  end
+
+  opts.on('-v', '--verbose', 'Show additional request and response information') do
+    options[:verbose] = true
+  end
+
+  opts.on_tail('-h', '--help', 'Show this message') do
+    puts opts
+    exit
   end
 end.parse!
 
@@ -37,7 +47,13 @@ if url.nil?
   exit 1
 end
 
-subdomain = extract_subdomain(url)
+if ARGV.size > 0
+  subdomain = url
+  path = ARGV.shift
+  url = "https://#{subdomain}.mocoapp.com/api/v1/#{path.gsub(/\A\//, '')}"
+else
+  subdomain = extract_subdomain(url)
+end
 
 # Load default API key from config
 config = YAML.load_file('config.yml')
@@ -63,8 +79,20 @@ else
   exit 1
 end
 
-if options.key?(:no_format)
-  puts result.body
+if options[:verbose]
+  puts "> #{options[:method]} #{result.env.url}"
+  puts(result.env.request_headers.map{ |k, v| "> #{k}: #{k == 'Authorization' ? v[0...16] + '<REDACTED>' + v[-4..-1] : v}" })
+  puts '>'
+  if result.env.request_body
+    puts result.env.request_body.split.map{ |l| "> #{l}" }.join
+  end
+  puts '---'
+  puts "< #{result.status} #{result.reason_phrase}"
+  puts(result.headers.map{ |k, v| "< #{k}: #{v}" })
+  puts ''
+end
+if options[:no_format]
+  puts result.body.to_json
 else
   puts JSON.pretty_generate(result.body)
 end

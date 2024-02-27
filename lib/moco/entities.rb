@@ -1,8 +1,11 @@
+# frozen_string_literal: true
+
 module MOCO
   class BaseEntity
     def eql?(other)
       return false unless other.is_a? self.class
-      self.id == other.id
+
+      id == other.id
     end
 
     def hash
@@ -10,7 +13,7 @@ module MOCO
     end
 
     def ==(other)
-      self.id == other.id
+      id == other.id
     end
 
     def to_h
@@ -41,7 +44,7 @@ module MOCO
     attr_accessor :id, :active, :name, :customer, :tasks
 
     def to_s
-      [customer.fetch('name'), name].join(' / ')
+      [customer&.name, name].join(' / ')
     end
   end
 
@@ -57,7 +60,8 @@ module MOCO
     attr_accessor :id, :active, :date, :description, :project, :task, :seconds, :hours, :billable, :billed, :user, :customer, :tag
 
     def to_s
-      "MOCO::Activity<#{hours}h (#{seconds}s) on #{date} Task '#{task&.name}' Description '#{description}' Project '#{project&.name}' (#{%i{billable billed}.map{ |x| (x ? "" : "not ") + x.to_s}.join(', ')})>"
+      "#{date} - #{hours}h (#{seconds}s) - #{project&.name} - #{task&.name}#{(!description.empty? ? " (#{description})" : '')}" +
+      " (#{%i{billable billed}.map{ |x| (self.send(x) ? '' : 'not ') + x.to_s}.join(', ')})"
     end
   end
 

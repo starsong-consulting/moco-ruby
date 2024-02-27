@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'faraday'
 require_relative './entities'
 
@@ -9,9 +11,8 @@ module MOCO
       @conn = Faraday.new do |f|
         f.request :json
         f.response :json
-        f.headers['Authorization'] = "Token token=#{@api_key}" if @api_key
-        f.headers['Content-Type'] = 'application/json'
-        f.url_prefix = "https://#{@subdomain}.mocoapp.com/api/v1" # Dynamic URL prefix
+        f.request :authorization, 'Token', "token=#{@api_key}" if @api_key
+        f.url_prefix = "https://#{@subdomain}.mocoapp.com/api/v1"
       end
     end
 
@@ -22,17 +23,17 @@ module MOCO
     end
 
     def get_projects(**args)
-      response = @conn.get('projects', args)
+      response = @conn.get("projects?#{Faraday::Utils.build_query(args)}")
       parse_projects_response(response.body)
     end
 
     def get_assigned_projects(**args)
-      response = @conn.get('projects/assigned', args)
+      response = @conn.get("projects/assigned?#{Faraday::Utils.build_query(args)}")
       parse_projects_response(response.body)
     end
 
     def get_activities(filters = {})
-      response = @conn.get('activities', filters)
+      response = @conn.get("activities?#{Faraday::Utils.build_query(filters)}")
       parse_activities_response(response.body)
     end
 

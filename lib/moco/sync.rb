@@ -3,100 +3,132 @@ require_relative './api'
 
 module MOCO
   class Sync
-    def initialize(source_instance_api, target_instance_api, config)
+    attr_reader :project_mapping, :task_mapping, :source_projects, :target_projects
+    attr_accessor :project_match_threshold, :task_match_threshold, :dry_run
+
+    def initialize(source_instance_api, target_instance_api, **args)
       @source_api = source_instance_api
       @target_api = target_instance_api
-      @config = config
+      @project_match_threshold = args.fetch(:project_match_threshold, 0.8)
+      @task_match_threshold = args.fetch(:task_match_threshold, 0.45)
+      @filters = args.fetch(:filters, {})
+      @dry_run = args.fetch(:dry_run, false)
 
       @project_mapping = {}
       @task_mapping = {}
 
-      fetch_projects
+      fetch_assigned_projects
       build_initial_mappings
+    end
+
+    def sync(&callbacks)
+      results = []
+
+      source_activities_r = @source_api.get_activities(@filters.fetch(:source, {}))
+      target_activities_r = @target_api.get_activities(@filters.fetch(:target, {}))
+
+      source_activities_grouped = source_activities_r.group_by(&:date).transform_values { |activities| activities.group_by(&:project) }
+      target_activities_grouped = target_activities_r.group_by(&:date).transform_values { |activities| activities.group_by(&:project) }
+
+      source_activities_grouped.each do |date, activities_by_project|
+        activities_by_project.each do |project, source_activities|
+          target_activities = target_activities_grouped.fetch(date, {}).fetch(@project_mapping[project.id], [])
+          next if source_activities.empty? || target_activities.empty?
+
+          matches = calculate_matches(source_activities, target_activities)
+          matches.sort_by! { |match| -match[:score] }
+
+          used_source_activities = []
+          used_target_activities = []
+
+          matches.each do |match|
+            source_activity, target_activity = match[:activity]
+            score = match[:score]
+
+            next if used_source_activities.include?(source_activity) || used_target_activities.include?(target_activity)
+
+            best_score = score
+            best_match = target_activity
+            expected_target_activity = get_expected_target_activity(source_activity)
+
+            case best_score
+            when 100
+              # 100 - perfect match found, nothing needs doing
+              callbacks&.call(:equal, source_activity, expected_target_activity)
+            when 60...100
+              # >=60 <100 - match with some differences
+              expected_target_activity.to_h.except(:id, :user, :customer).each do |k, v|
+                best_match.send("#{k}=", v)
+              end
+              callbacks&.call(:update, source_activity, best_match)
+              unless @dry_run
+                results << @target_api.update_activity(best_match)
+                callbacks&.call(:updated, source_activity, best_match, results.last)
+              end
+            when 0...60
+              # <60 - no good match found, create new entry
+              callbacks&.call(:create, source_activity, expected_target_activity)
+              unless @dry_run
+                results << @target_api.create_activity(expected_target_activity)
+                callbacks&.call(:created, source_activity, best_match, results.last)
+              end
+            end
+
+            used_source_activities << source_activity
+            used_target_activities << target_activity
+          end
+        end
+      end
+      results
+    end
+
+    private
+
+    def get_expected_target_activity(source_activity)
+      source_activity.dup.tap do |a|
+        a.task = @task_mapping[source_activity.task.id]
+        a.project = @project_mapping[source_activity.project.id]
+      end
+    end
+
+    def calculate_matches(source_activities, target_activities)
+      matches = []
+      source_activities.each do |source_activity|
+        target_activities.each do |target_activity|
+          score = score_activity_match(get_expected_target_activity(source_activity), target_activity)
+          matches << { activity: [source_activity, target_activity], score: score }
+        end
+      end
+      matches
+    end
+
+    def clamped_factored_diff_score(a, b, cmin=0.0, cmax=7.0, factor=0.5)
+      difference = (a - b).abs.clamp(cmin, cmax)
+      normalized_difference = difference / cmax
+      sublinear_factor = normalized_difference ** factor
+      score = 1 - sublinear_factor
+      [0.0, score].max
     end
 
     def score_activity_match(a, b)
       return 0 if a.project != b.project
 
       score = 0
+      # (mapped) task is the same as the source task
       score += 20 if a.task == b.task
-      # score += 40 if (!a.description.empty? && a.description == b.description) || (!a.tag.empty? && a.tag == b.tag)
-      _, match_score = FuzzyMatch.new([a.description]).find_with_score(b.description)
-      score += (match_score * 40).to_i if match_score
-      if a.hours == b.hours
-        score += 40
-      elsif (a.hours - b.hours).abs <= 0.5
-        score += 20
-      end
+      # description fuzzy match score (0.0 .. 1.0)
+      _, description_match_score = FuzzyMatch.new([a.description]).find_with_score(b.description)
+      score += (description_match_score * 40.0).to_i if description_match_score
+      # differences in time tracked are weighted by sqrt of diff clamped to 7h
+      # i.e. smaller differences are worth higher scores; 1.75h diff = 0.5 score * 40
+      score += (clamped_factored_diff_score(a.hours, b.hours) * 40.0).to_i
 
       score
     end
 
-    def sync(filters)
-      filters ||= {}
-      source_activities = @source_api.get_activities(filters)
-      target_activities = @target_api.get_activities(filters)
-
-      source_activities_grouped = source_activities.group_by(&:date).transform_values { |activities| activities.group_by(&:project) }
-      target_activities_grouped = target_activities.group_by(&:date).transform_values { |activities| activities.group_by(&:project) }
-
-      source_activities_grouped.each do |date, s_act_on_date|
-        s_act_on_date.each do |project, source_project_activities|
-          # get corresponding values from target_activities_grouped[date][project]
-          # if none found, create all activities
-          # otherwise try to match each source activity to each target activity with scoring
-          # for each matched activity
-          #   if scores are equal, the activities are already the same and can be ignored (log "EQL")
-          #   if scores are above the threshold, the activities are likely the same, but have changed, so update the values in target_activity from source_activity
-          #   if scores are below the threshold, the activity does not yet exist, so create new target_activity from source_activity
-          target_project_activities = target_activities_grouped.fetch(date, {}).fetch(@project_mapping[project.id], []) # Handle missing dates/projects
-          puts "syncing #{date} / #{project.name} source #{source_project_activities.size} dest #{target_project_activities.size}"
-
-          source_project_activities.each do |source_activity|
-            matches = {}
-
-            expected_target_activity = source_activity.dup.tap do |a|
-              a.task = @task_mapping[source_activity.task.id]
-              a.project = @project_mapping[source_activity.project.id]
-            end
-
-            target_project_activities.each do |target_activity|
-              score = score_activity_match(expected_target_activity, target_activity)
-              # $stderr.puts "score #{score} comparing\nA: #{source_activity} and\nB: #{target_activity}"
-
-              matches[target_activity] = score
-            end
-            best_match, best_score = matches.max_by{ |k, v| v }
-
-            if best_score >= 100 # Perfect match
-              puts("EQL\n  A: #{source_activity}\n  B: #{best_match}") # Log that nothing needs updating
-            elsif best_score >= 60
-              diff_keys = expected_target_activity.to_h.except(:id, :user, :customer).map{ |k,v| ov = best_match.send(k.to_sym); [k,v,ov] if v != ov }.reject(&:nil?).to_a if best_match
-              puts("UPD\n  A: #{source_activity}\n  B: #{best_match}")
-              diff_keys.each do |k, v1, v2|
-                puts "  - #{k} #{v1.to_s.inspect} -> #{v2.to_s.inspect}"
-                case k
-                when :hours, :seconds
-                  best_match.send("#{k}=", [v1, v2].max)
-                end
-              end
-              puts "  T: #{best_match}"
-              # Update the best_match target activity with data from source_activity
-              @target_api.update_activity(best_match)
-            else
-              puts("NEW  #{source_activity}")
-              @target_api.create_activity(expected_target_activity) # Create new
-            end
-          end
-        end
-      end
-    end
-
-    private
-
-    def fetch_projects
-      @source_projects = @source_api.get_assigned_projects(active: "true")
-      @target_projects = @target_api.get_assigned_projects(active: "true")
+    def fetch_assigned_projects
+      @source_projects = @source_api.get_assigned_projects(**@filters.fetch(:source, {}).merge(active: 'true'))
+      @target_projects = @target_api.get_assigned_projects(**@filters.fetch(:target, {}).merge(active: 'true'))
     end
 
     def build_initial_mappings
@@ -113,16 +145,13 @@ module MOCO
     end
 
     def match_project(target_project)
-      threshold = @config['project_match_threshold'] || 0.8
       matcher = FuzzyMatch.new(@source_projects, read: :name)
-      matcher.find(target_project.name, threshold: threshold)
+      matcher.find(target_project.name, threshold: @project_match_threshold)
     end
 
     def match_task(target_task, source_project)
-      threshold = @config['project_match_threshold'] || 0.45
       matcher = FuzzyMatch.new(source_project.tasks, read: :name)
-      # all_matches = matcher.find_all_with_score(target_task.name)
-      matcher.find(target_task.name, threshold: threshold)
+      matcher.find(target_task.name, threshold: @task_match_threshold)
     end
   end
 end
