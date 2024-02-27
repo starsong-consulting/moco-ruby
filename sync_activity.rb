@@ -31,7 +31,7 @@ OptionParser.new do |opts|
     options[:company_id] = company_id
   end
 
-  opts.on('-t', '--term TERM', 'Term to filter for') do |term|
+  opts.on('-g', '--term TERM', 'Term to filter for') do |term|
     options[:term] = term
   end
 
