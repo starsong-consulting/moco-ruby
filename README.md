@@ -1,8 +1,18 @@
-# moco.rb
+# moco-ruby
 
-## Library
+A Ruby Gem to interact with the [MOCO API](https://hundertzehn.github.io/mocoapp-api-docs/).
 
-A Ruby library to abstract the [MOCO API](https://hundertzehn.github.io/mocoapp-api-docs/).
+## Installation
+
+Install the gem and add to the application's Gemfile by executing:
+
+    $ bundle add moco-ruby
+
+If bundler is not being used to manage dependencies, install the gem by executing:
+
+    $ gem install moco-ruby
+
+## Usage
 
 ### MOCO::API
 

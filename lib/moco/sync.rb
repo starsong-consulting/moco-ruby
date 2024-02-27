@@ -1,7 +1,10 @@
-require 'fuzzy_match'
-require_relative './api'
+# frozen_string_literal: true
+
+require "fuzzy_match"
+require_relative "api"
 
 module MOCO
+  # Match and map projects and tasks between MOCO instances and sync activities
   class Sync
     attr_reader :project_mapping, :task_mapping, :source_projects, :target_projects
     attr_accessor :project_match_threshold, :task_match_threshold, :dry_run
@@ -21,14 +24,19 @@ module MOCO
       build_initial_mappings
     end
 
+    # rubocop:todo Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def sync(&callbacks)
       results = []
 
       source_activities_r = @source_api.get_activities(@filters.fetch(:source, {}))
       target_activities_r = @target_api.get_activities(@filters.fetch(:target, {}))
 
-      source_activities_grouped = source_activities_r.group_by(&:date).transform_values { |activities| activities.group_by(&:project) }
-      target_activities_grouped = target_activities_r.group_by(&:date).transform_values { |activities| activities.group_by(&:project) }
+      source_activities_grouped = source_activities_r.group_by(&:date).transform_values do |activities|
+        activities.group_by(&:project)
+      end
+      target_activities_grouped = target_activities_r.group_by(&:date).transform_values do |activities|
+        activities.group_by(&:project)
+      end
 
       source_activities_grouped.each do |date, activities_by_project|
         activities_by_project.each do |project, source_activities|
@@ -81,6 +89,7 @@ module MOCO
       end
       results
     end
+    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     private
 
@@ -102,14 +111,15 @@ module MOCO
       matches
     end
 
-    def clamped_factored_diff_score(a, b, cmin=0.0, cmax=7.0, factor=0.5)
+    def clamped_factored_diff_score(a, b, cmin = 0.0, cmax = 7.0, factor = 0.5)
       difference = (a - b).abs.clamp(cmin, cmax)
       normalized_difference = difference / cmax
-      sublinear_factor = normalized_difference ** factor
+      sublinear_factor = normalized_difference**factor
       score = 1 - sublinear_factor
       [0.0, score].max
     end
 
+    # rubocop:disable Metrics/AbcSize
     def score_activity_match(a, b)
       return 0 if a.project != b.project
 
@@ -125,10 +135,11 @@ module MOCO
 
       score
     end
+    # rubocop:enable Metrics/AbcSize
 
     def fetch_assigned_projects
-      @source_projects = @source_api.get_assigned_projects(**@filters.fetch(:source, {}).merge(active: 'true'))
-      @target_projects = @target_api.get_assigned_projects(**@filters.fetch(:target, {}).merge(active: 'true'))
+      @source_projects = @source_api.get_assigned_projects(**@filters.fetch(:source, {}).merge(active: "true"))
+      @target_projects = @target_api.get_assigned_projects(**@filters.fetch(:target, {}).merge(active: "true"))
     end
 
     def build_initial_mappings
