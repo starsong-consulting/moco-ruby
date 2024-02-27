@@ -8,10 +8,11 @@ GEM
     fuzzy_match (2.1.0)
     net-http (0.3.2)
       uri
-    uri (0.12.0)
+    uri (0.13.0)
 
 PLATFORMS
   arm64-darwin-22
+  x86_64-linux
 
 DEPENDENCIES
   faraday
