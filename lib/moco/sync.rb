@@ -41,7 +41,7 @@ module MOCO
       source_activities_grouped.each do |date, activities_by_project|
         activities_by_project.each do |project, source_activities|
           target_activities = target_activities_grouped.fetch(date, {}).fetch(@project_mapping[project.id], [])
-          next if source_activities.empty? || target_activities.empty?
+          next if source_activities.empty? # || target_activities.empty?
 
           matches = calculate_matches(source_activities, target_activities)
           matches.sort_by! { |match| -match[:score] }
@@ -84,6 +84,17 @@ module MOCO
 
             used_source_activities << source_activity
             used_target_activities << target_activity
+          end
+
+          source_activities.each do |source_activity|
+            unless used_source_activities.include?(source_activity) 
+              expected_target_activity = get_expected_target_activity(source_activity)
+              callbacks&.call(:create, source_activity, expected_target_activity)
+              unless @dry_run
+                results << @target_api.create_activity(expected_target_activity)
+                callbacks&.call(:created, source_activity, expected_target_activity, results.last)
+              end
+            end
           end
         end
       end
