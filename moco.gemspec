@@ -30,5 +30,6 @@ Gem::Specification.new do |spec|
 
   spec.add_dependency "faraday", "~> 2.9.0"
   spec.add_dependency "fuzzy_match", "~> 2.1.0"
+  spec.add_dependency "activesupport", "~> 7.0"
   spec.metadata["rubygems_mfa_required"] = "true"
 end
