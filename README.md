@@ -14,7 +14,101 @@ If bundler is not being used to manage dependencies, install the gem by executin
 
 ## Usage
 
-### MOCO::API
+### v2.0.0 API (Recommended)
+
+```ruby
+# Initialize client
+moco = MOCO::Client.new(subdomain: "your-subdomain", api_key: "your-api-key")
+
+# Get all projects
+projects = moco.projects.all
+
+# Get a specific project
+project = moco.projects.find(123)
+
+# Chain operations
+project.archive.assign_to_group(456)
+
+# Work with activities
+activities = project.activities
+activity = activities.create(
+  date: "2023-01-01",
+  task_id: project.tasks.first.id,
+  hours: 2,
+  description: "Development work"
+)
+
+# Start and stop timers
+activity.start_timer
+# ... do work ...
+activity.stop_timer
+
+# Automatic entity creation from API responses
+report = moco.get("projects/123/report")
+```
+
+### Entity Associations
+
+Entities have association methods for related entities:
+
+```ruby
+# Project associations
+project.tasks          # => Array of Task objects
+project.activities     # => Array of Activity objects
+project.customer       # => Company object
+
+# Activity associations
+activity.project       # => Project object
+activity.task          # => Task object
+activity.user          # => User object
+
+# User associations
+user.activities        # => Array of Activity objects
+user.presences         # => Array of Presence objects
+user.holidays          # => Array of Holiday objects
+```
+
+### Supported Entities
+
+The gem supports all MOCO API entities with a Ruby-esque interface:
+
+- Project
+- Activity
+- User
+- Company
+- Task
+- Invoice
+- Deal
+- Expense
+- WebHook
+- Schedule
+- Presence
+- Holiday
+- PlanningEntry
+
+### Dynamic Collection Access
+
+The client dynamically handles any collection name that follows Rails conventions:
+
+```ruby
+# These all work automatically
+moco.projects.all
+moco.activities.where(date: "2023-01-01")
+moco.users.find(123)
+moco.companies.create(name: "New Company")
+moco.invoices.where(status: "draft")
+moco.deals.all
+moco.expenses.where(billable: true)
+moco.web_hooks.all
+moco.schedules.where(date: "2023-01-01")
+moco.presences.all
+moco.holidays.where(year: 2023)
+moco.planning_entries.all
+```
+
+### Legacy API (v0.1.x)
+
+The legacy API is still available but deprecated:
 
 ```ruby
 moco = MOCO::API.new(subdomain, api_key)
@@ -25,41 +119,6 @@ assigned_projects.each do |project|
     puts "- Task #{task.name} is #{task.billable ? 'billable' : 'not billable'}"
   end
 end
-```
-
-### MOCO::Entities
-
-The following entities are currently defined:
-
-- Project (:id, :active, :name, :customer, :tasks)
-- Task (:id, :active, :name, :project_id, :billable)
-- Activity (:id, :active, :date, :description, :project, :task, :seconds, :hours, :billable, :billed, :user, :customer, :tag)
-- Customer (:id, :name)
-- User (:id, :firstname, :lastname)
-
-The entities implement comparison, hash and JSON conversion.
-
-### MOCO::Sync
-
-Intelligently matches and syncs data from one MOCO instance to another.
-Currently supports activities (time entries) only.
-See `sync_activity.rb` for a more detailed example.
-
-```ruby
-source_api = MOCO::API.new(source_instance, source_api_key)
-target_api = MOCO::API.new(target_instance, target_api_key)
-
-syncer = MOCO::Sync.new(
-  source_api,
-  target_api,
-  project_match_threshold: options[:match_project_threshold],
-  task_match_threshold: options[:match_task_threshold],
-  filters: {
-    source: options.slice(:from, :to, :project_id, :company_id, :term),
-    target: options.slice(:from, :to)
-  },
-  dry_run: options[:dry_run]
-)
 ```
 
 ## Utilities
