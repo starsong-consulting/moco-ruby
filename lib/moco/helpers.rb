@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 module MOCO
+  # Utility class with helper methods for the MOCO API
   class Helpers
     def self.decimal_hours_to_civil(decimal_hours)
       hours = decimal_hours.floor

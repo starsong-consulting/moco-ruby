@@ -28,8 +28,7 @@ module MOCO
       hash
     end
 
-    # rubocop:disable Metrics/MethodLength
-    def to_json(*arg)
+        def to_json(*arg)
       to_h do |k, v|
         if v.is_a? Hash
           if v.key?(:id) && !v[:id].nil?
@@ -41,7 +40,7 @@ module MOCO
           [k, v]
         end
       end.to_h.to_json(arg)
-    end
+        end
   end
   # rubocop:enable Metrics/MethodLength
 
@@ -69,8 +68,11 @@ module MOCO
                   :customer, :tag
 
     def to_s
-      "#{date} - #{Helpers.decimal_hours_to_civil(hours)}h (#{seconds}s) - #{project&.name} - #{task&.name}#{description.empty? ? "" : " (#{description})"} " \
-        "(#{%i[billable billed].map { |x| (send(x) ? "" : "not ") + x.to_s }.join(", ")})"
+      description_part = description.empty? ? "" : " (#{description})"
+      status_part = "(#{%i[billable billed].map { |x| (send(x) ? "" : "not ") + x.to_s }.join(", ")})"
+
+      "#{date} - #{Helpers.decimal_hours_to_civil(hours)}h (#{seconds}s) - " \
+        "#{project&.name} - #{task&.name}#{description_part} #{status_part}"
     end
   end
 

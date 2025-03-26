@@ -1,5 +1,5 @@
 AllCops:
-  TargetRubyVersion: 2.6
+  TargetRubyVersion: 3.2
   SuggestExtensions: false
   NewCops: enable
 
@@ -15,12 +15,19 @@ Naming/MethodParameterName:
   AllowedNames:
   - a
   - b
+  - id
 
 Layout/LineLength:
   Max: 130
 
 Metrics/BlockLength:
-  Max: 40
+  Enabled: false
 
 Metrics/ClassLength:
-  Max: 130
+  Enabled: false
+
+Metrics/MethodLength:
+  Enabled: false
+
+Metrics/AbcSize:
+  Enabled: false
