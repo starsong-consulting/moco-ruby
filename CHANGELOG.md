@@ -21,7 +21,6 @@
   - Holiday
   - PlanningEntry
 - Entity association methods for related entities
-- Dynamic collection access with method_missing
 - Automatic entity creation from API responses
 - Struct-based fallback for unknown entity types
 
@@ -29,7 +28,6 @@
 - Added ActiveSupport dependency for inflection methods
 - Reorganized code structure for better maintainability
 - Updated documentation with new API examples
-- Marked legacy API as deprecated
 
 ## [0.1.1] - 2024-02-27
 
