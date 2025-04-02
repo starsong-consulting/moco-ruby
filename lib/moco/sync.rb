@@ -151,8 +151,8 @@ module MOCO
     # rubocop:enable Metrics/AbcSize
 
     def fetch_assigned_projects
-      @source_projects = @source_api.get_assigned_projects(**@filters.fetch(:source, {}).merge(active: "true"))
-      @target_projects = @target_api.get_assigned_projects(**@filters.fetch(:target, {}).merge(active: "true"))
+      @source_projects = @source_api.get_assigned_projects(**@filters.fetch(:source, {}), active: "true")
+      @target_projects = @target_api.get_assigned_projects(**@filters.fetch(:target, {}), active: "true")
     end
 
     def build_initial_mappings

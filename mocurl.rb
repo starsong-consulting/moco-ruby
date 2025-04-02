@@ -58,7 +58,7 @@ end
 
 # Load default API key from config
 config = YAML.load_file("config.yml")
-options[:api_key] ||= config["instances"].fetch(subdomain, nil)&.fetch("api_key", nil)
+options[:api_key] ||= config["instances"].dig(subdomain, "api_key")
 
 warn "Error: No API key found for `#{subdomain}' and none given, continuing without" if options[:api_key].nil?
 
