@@ -6,15 +6,15 @@ module MOCO
   class Deal < BaseEntity
     # Associations
     def company
-      @company ||= client.companies.find(company_id) if company_id
+      association(:company) || association(:customer, "Company")
     end
 
     def user
-      @user ||= client.users.find(user_id) if user_id
+      association(:user)
     end
 
     def category
-      @category ||= client.deal_categories.find(category_id) if category_id
+      association(:category, "DealCategory")
     end
 
     def to_s

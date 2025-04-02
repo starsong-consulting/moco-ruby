@@ -23,6 +23,7 @@
 - Entity association methods for related entities
 - Automatic entity creation from API responses
 - Struct-based fallback for unknown entity types
+- Generic association method for handling relationships between entities
 
 ### Changed
 - Added ActiveSupport dependency for inflection methods

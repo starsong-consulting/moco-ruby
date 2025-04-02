@@ -38,19 +38,19 @@ module MOCO
 
     # Associations
     def project
-      @project ||= client.projects.find(project_id) if project_id
+      association(:project)
     end
 
     def task
-      @task ||= client.tasks.find(task_id) if task_id
+      association(:task)
     end
 
     def user
-      @user ||= client.users.find(user_id) if user_id
+      association(:user)
     end
 
     def customer
-      @customer ||= client.companies.find(customer_id) if customer_id
+      association(:customer, "Company")
     end
 
     def to_s

@@ -39,11 +39,11 @@ module MOCO
 
     # Associations
     def company
-      @company ||= client.companies.find(company_id) if company_id
+      association(:customer, "Company")
     end
 
     def project
-      @project ||= client.projects.find(project_id) if project_id
+      association(:project)
     end
 
     def to_s

@@ -41,7 +41,16 @@ module MOCO
 
     # Associations
     def tasks
-      client.tasks.where(project_id: id)
+      return client.tasks.where(project_id: id) if client.respond_to?(:tasks)
+
+      # If tasks are included in the attributes, convert them to Task objects
+      if attributes[:tasks].is_a?(Array)
+        attributes[:tasks].map do |task_data|
+          MOCO::Task.new(client, task_data)
+        end
+      else
+        []
+      end
     end
 
     def activities
@@ -53,11 +62,11 @@ module MOCO
     end
 
     def customer
-      @customer ||= client.companies.find(customer_id) if customer_id
+      association(:customer, "Company") || association(:company, "Company")
     end
 
     def project_group
-      @project_group ||= client.project_groups.find(project_group_id) if project_group_id
+      association(:project_group)
     end
 
     def to_s

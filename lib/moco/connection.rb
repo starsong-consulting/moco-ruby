@@ -64,8 +64,17 @@ module MOCO
 
       keys = hash.keys.map(&:to_sym)
       values = hash.values.map do |v|
-        v.is_a?(Hash) || (v.is_a?(Array) && v.first.is_a?(Hash)) ? to_struct(v) : v
+        if v.is_a?(Hash)
+          to_struct(v)
+        elsif v.is_a?(Array) && v.any? && v.first.is_a?(Hash)
+          v.map { |item| to_struct(item) }
+        else
+          v
+        end
       end
+
+      # Ensure we have at least one key
+      return hash if keys.empty?
 
       Struct.new(*keys).new(*values)
     end
