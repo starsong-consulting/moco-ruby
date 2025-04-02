@@ -29,20 +29,20 @@ if projects.any?
   project = projects.first
   puts "\nProject Details for #{project.name}:"
   puts "  Customer: #{project.customer&.name}"
-  
+
   # Get tasks for the project
   puts "  Tasks:"
   project.tasks.each do |task|
-    puts "  - #{task.name} (#{task.billable ? 'Billable' : 'Non-billable'})"
+    puts "  - #{task.name} (#{task.billable ? "Billable" : "Non-billable"})"
   end
-  
+
   # Get recent activities for the project
   puts "\nRecent Activities for #{project.name}:"
   activities = project.activities
   activities.each do |activity|
     puts "  - #{activity.date}: #{activity.hours}h - #{activity.description} (#{activity.user&.full_name})"
   end
-  
+
   # Demonstrate chaining (commented out to avoid modifying data)
   # project.archive.assign_to_group(123).unarchive
 end
@@ -59,7 +59,11 @@ puts "\nDemonstrating dynamic collection access:"
 collections = %w[companies deals invoices expenses schedules presences holidays planning_entries]
 collections.each do |collection|
   if moco.respond_to?(collection)
-    count = moco.send(collection).count rescue 0
+    count = begin
+      moco.send(collection).count
+    rescue StandardError
+      0
+    end
     puts "- #{collection}: #{count} items"
   else
     puts "- #{collection}: not available"

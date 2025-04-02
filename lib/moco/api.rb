@@ -79,9 +79,9 @@ module MOCO
 
     def disregard_activities(reason:, activity_ids:, company_id:, project_id: nil)
       payload = {
-        reason: reason,
-        activity_ids: activity_ids,
-        company_id: company_id
+        reason:,
+        activity_ids:,
+        company_id:
       }
       payload[:project_id] = project_id if project_id
       @conn.post("activities/disregard", payload)
@@ -112,7 +112,7 @@ module MOCO
     end
 
     def assign_project_to_group(project_id, project_group_id)
-      @conn.put("projects/#{project_id}/assign_project_group", { project_group_id: project_group_id })
+      @conn.put("projects/#{project_id}/assign_project_group", { project_group_id: })
     end
 
     def unassign_project_from_group(project_id)
@@ -121,7 +121,6 @@ module MOCO
 
     private
 
-    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def parse_projects_response(data)
       data.map do |project_data|
         Project.new.tap do |project|
@@ -139,9 +138,7 @@ module MOCO
         end
       end
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
-    # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
     def parse_activities_response(data)
       data.map do |activity_data|
         Activity.new.tap do |activity|
@@ -160,7 +157,6 @@ module MOCO
         end
       end
     end
-    # rubocop:enable Metrics/AbcSize, Metrics/MethodLength
 
     def parse_project_reference(project_data)
       Project.new.tap do |project|

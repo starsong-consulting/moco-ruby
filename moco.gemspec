@@ -10,7 +10,7 @@ Gem::Specification.new do |spec|
 
   spec.summary = "A Ruby Gem to interact with the MOCO (mocoapp.com) API."
   spec.homepage = "https://github.com/starsong-consulting/moco-ruby"
-  spec.required_ruby_version = ">= 2.6.0"
+  spec.required_ruby_version = ">= 3.2.0"
   spec.license = "Apache-2.0"
 
   spec.metadata["homepage_uri"] = spec.homepage
@@ -32,7 +32,5 @@ Gem::Specification.new do |spec|
   spec.add_dependency "faraday", "~> 2.9.0"
   spec.add_dependency "fuzzy_match", "~> 2.1.0"
 
-  spec.add_development_dependency "test-unit", "~> 3.5"
-  spec.add_development_dependency "webmock", "~> 3.18"
   spec.metadata["rubygems_mfa_required"] = "true"
 end

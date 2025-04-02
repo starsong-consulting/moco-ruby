@@ -8,7 +8,7 @@ module MOCO
   class Sync
     attr_reader :project_mapping, :task_mapping, :source_projects, :target_projects
     attr_accessor :project_match_threshold, :task_match_threshold, :dry_run
-  
+
     def initialize(source_instance_api, target_instance_api, **args)
       @source_api = source_instance_api
       @target_api = target_instance_api
@@ -16,15 +16,15 @@ module MOCO
       @task_match_threshold = args.fetch(:task_match_threshold, 0.45)
       @filters = args.fetch(:filters, {})
       @dry_run = args.fetch(:dry_run, false)
-  
+
       @project_mapping = {}
       @task_mapping = {}
-  
+
       fetch_assigned_projects
       build_initial_mappings
     end
-  
-    # rubocop:todo Metrics/AbcSize, Metrics/MethodLength, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+
+    # rubocop:todo Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def sync(&callbacks)
       results = []
 
@@ -89,15 +89,14 @@ module MOCO
       end
 
       source_activities_r.each do |source_activity|
-        unless used_source_activities.include?(source_activity)
-          next unless @project_mapping[source_activity.project.id]
-          
-          expected_target_activity = get_expected_target_activity(source_activity)
-          callbacks&.call(:create, source_activity, expected_target_activity)
-          unless @dry_run
-            results << @target_api.create_activity(expected_target_activity)
-            callbacks&.call(:created, source_activity, expected_target_activity, results.last)
-          end
+        next if used_source_activities.include?(source_activity)
+        next unless @project_mapping[source_activity.project.id]
+
+        expected_target_activity = get_expected_target_activity(source_activity)
+        callbacks&.call(:create, source_activity, expected_target_activity)
+        unless @dry_run
+          results << @target_api.create_activity(expected_target_activity)
+          callbacks&.call(:created, source_activity, expected_target_activity, results.last)
         end
       end
 
@@ -119,7 +118,7 @@ module MOCO
       source_activities.each do |source_activity|
         target_activities.each do |target_activity|
           score = score_activity_match(get_expected_target_activity(source_activity), target_activity)
-          matches << { activity: [source_activity, target_activity], score: score }
+          matches << { activity: [source_activity, target_activity], score: }
         end
       end
       matches

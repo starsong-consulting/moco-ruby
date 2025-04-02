@@ -28,7 +28,7 @@ module MOCO
       hash
     end
 
-        def to_json(*arg)
+    def to_json(*arg)
       to_h do |k, v|
         if v.is_a? Hash
           if v.key?(:id) && !v[:id].nil?
@@ -40,9 +40,8 @@ module MOCO
           [k, v]
         end
       end.to_h.to_json(arg)
-        end
+    end
   end
-  # rubocop:enable Metrics/MethodLength
 
   # https://hundertzehn.github.io/mocoapp-api-docs/sections/projects.html
   class Project < BaseEntity
