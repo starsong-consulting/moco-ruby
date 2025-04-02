@@ -5,6 +5,8 @@ require "active_support/core_ext"
 require "active_support/inflector"
 
 require_relative "moco/version"
+
+# New API (v2)
 require_relative "moco/entities/base_entity"
 require_relative "moco/entities/project"
 require_relative "moco/entities/activity"
@@ -22,6 +24,11 @@ require_relative "moco/entities/planning_entry"
 require_relative "moco/client"
 require_relative "moco/connection"
 require_relative "moco/entity_collection"
+
+# Legacy API (v1) - deprecated
+require_relative "moco/entities"
+require_relative "moco/api"
+require_relative "moco/sync"
 
 module MOCO
   class Error < StandardError; end

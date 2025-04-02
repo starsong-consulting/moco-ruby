@@ -4,6 +4,7 @@ require_relative "helpers"
 
 module MOCO
   # Base entity class others inherit from, providing comparison, to_h, to_json
+  # @deprecated Use MOCO::BaseEntity from entities/base_entity.rb instead
   class BaseEntity
     def eql?(other)
       return false unless other.is_a? self.class
@@ -44,6 +45,7 @@ module MOCO
   end
 
   # https://hundertzehn.github.io/mocoapp-api-docs/sections/projects.html
+  # @deprecated Use MOCO::Project from entities/project.rb instead
   class Project < BaseEntity
     attr_accessor :id, :active, :name, :customer, :tasks
 
@@ -53,6 +55,7 @@ module MOCO
   end
 
   # https://hundertzehn.github.io/mocoapp-api-docs/sections/project_tasks.html
+  # @deprecated Use MOCO::Task from entities/task.rb instead
   class Task < BaseEntity
     attr_accessor :id, :active, :name, :project_id, :billable
 
@@ -62,6 +65,7 @@ module MOCO
   end
 
   # https://hundertzehn.github.io/mocoapp-api-docs/sections/activities.html
+  # @deprecated Use MOCO::Activity from entities/activity.rb instead
   class Activity < BaseEntity
     attr_accessor :id, :active, :date, :description, :project, :task, :seconds, :hours, :billable, :billed, :user,
                   :customer, :tag
@@ -76,11 +80,13 @@ module MOCO
   end
 
   # https://hundertzehn.github.io/mocoapp-api-docs/sections/companies.html
+  # @deprecated Use MOCO::Company from entities/company.rb instead
   class Customer < BaseEntity
     attr_accessor :id, :name
   end
 
   # https://hundertzehn.github.io/mocoapp-api-docs/sections/users.html
+  # @deprecated Use MOCO::User from entities/user.rb instead
   class User < BaseEntity
     attr_accessor :id, :firstname, :lastname
   end

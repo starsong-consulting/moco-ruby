@@ -5,8 +5,10 @@ require_relative "entities"
 
 module MOCO
   # MOCO::API abstracts access to the MOCO API and its entities
+  # @deprecated Use MOCO::Client instead which provides a more Ruby-esque interface
   class API
     def initialize(subdomain, api_key)
+      warn "[DEPRECATION] MOCO::API is deprecated. Please use MOCO::Client instead."
       @subdomain = subdomain
       @api_key = api_key
       @conn = Faraday.new do |f|
