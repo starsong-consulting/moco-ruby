@@ -59,24 +59,18 @@ module MOCO
     end
 
     # Convert hash to Struct for unknown entity types
+    # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def to_struct(hash)
       return hash unless hash.is_a?(Hash)
+      return hash if hash.empty?
 
       keys = hash.keys.map(&:to_sym)
       values = hash.values.map do |v|
-        if v.is_a?(Hash)
-          to_struct(v)
-        elsif v.is_a?(Array) && v.any? && v.first.is_a?(Hash)
-          v.map { |item| to_struct(item) }
-        else
-          v
-        end
+        v.is_a?(Hash) || (v.is_a?(Array) && v.any? && v.first.is_a?(Hash)) ? to_struct(v) : v
       end
-
-      # Ensure we have at least one key
-      return hash if keys.empty?
 
       Struct.new(*keys).new(*values)
     end
+    # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
   end
 end
