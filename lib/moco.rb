@@ -25,11 +25,6 @@ require_relative "moco/client"
 require_relative "moco/connection"
 require_relative "moco/entity_collection"
 
-# Legacy API (v1) - deprecated
-require_relative "moco/entities"
-require_relative "moco/api"
-require_relative "moco/sync"
-
 module MOCO
   class Error < StandardError; end
 end
