@@ -38,6 +38,21 @@ module MOCO
       parse_activities_response(response.body)
     end
 
+    def get_activity(id)
+      response = @conn.get("activities/#{id}")
+      parse_activities_response([response.body]).first
+    end
+
+    def create_activities_bulk(activities)
+      api_entities = activities.map do |activity|
+        activity.to_h.except(:id, :project, :user, :customer).tap do |h|
+          h[:project_id] = activity.project.id
+          h[:task_id] = activity.task.id
+        end
+      end
+      @conn.post("activities/bulk", { activities: api_entities })
+    end
+
     def create_activity(activity)
       api_entity = activity.to_h.except(:id, :project, :user, :customer).tap do |h|
         h[:project_id] = activity.project.id
@@ -52,6 +67,56 @@ module MOCO
         h[:task_id] = activity.task.id
       end
       @conn.put("activities/#{activity.id}", api_entity)
+    end
+
+    def start_activity_timer(activity_id)
+      @conn.patch("activities/#{activity_id}/start_timer")
+    end
+
+    def stop_activity_timer(activity_id)
+      @conn.patch("activities/#{activity_id}/stop_timer")
+    end
+
+    def disregard_activities(reason:, activity_ids:, company_id:, project_id: nil)
+      payload = {
+        reason: reason,
+        activity_ids: activity_ids,
+        company_id: company_id
+      }
+      payload[:project_id] = project_id if project_id
+      @conn.post("activities/disregard", payload)
+    end
+
+    def delete_activity(activity_id)
+      @conn.delete("activities/#{activity_id}")
+    end
+
+    def archive_project(project_id)
+      @conn.put("projects/#{project_id}/archive")
+    end
+
+    def unarchive_project(project_id)
+      @conn.put("projects/#{project_id}/unarchive")
+    end
+
+    def get_project_report(project_id)
+      @conn.get("projects/#{project_id}/report")
+    end
+
+    def share_project_report(project_id)
+      @conn.put("projects/#{project_id}/share")
+    end
+
+    def disable_project_report_sharing(project_id)
+      @conn.put("projects/#{project_id}/disable_share")
+    end
+
+    def assign_project_to_group(project_id, project_group_id)
+      @conn.put("projects/#{project_id}/assign_project_group", { project_group_id: project_group_id })
+    end
+
+    def unassign_project_from_group(project_id)
+      @conn.put("projects/#{project_id}/unassign_project_group")
     end
 
     private

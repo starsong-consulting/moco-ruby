@@ -1,8 +1,20 @@
 # Changelog
 
-The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
-
 ## [Unreleased]
+
+## [0.1.2] - 2025-04-02
+
+### Added
+- Complete Activities API implementation:
+  - Single activity retrieval
+  - Bulk activity creation
+  - Activity timer control (start/stop)
+  - Activity disregard endpoint
+  - Activity deletion
+- Project management API endpoints:
+  - Archive/unarchive projects
+  - Project report operations
+  - Project group assignment
 
 ## [0.1.1] - 2024-02-27
 
