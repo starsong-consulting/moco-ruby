@@ -14,8 +14,6 @@ If bundler is not being used to manage dependencies, install the gem by executin
 
 ## Usage
 
-### v2.0.0 API (Recommended)
-
 ```ruby
 # Initialize client
 moco = MOCO::Client.new(subdomain: "your-subdomain", api_key: "your-api-key")
@@ -104,21 +102,6 @@ moco.schedules.where(date: "2023-01-01")
 moco.presences.all
 moco.holidays.where(year: 2023)
 moco.planning_entries.all
-```
-
-### Legacy API (v0.1.x)
-
-The legacy API is still available but deprecated:
-
-```ruby
-moco = MOCO::API.new(subdomain, api_key)
-assigned_projects = moco.get_assigned_projects(active: 'true')
-assigned_projects.each do |project|
-  puts "Project \##{project.id} #{project.name} for customer #{project.customer.name}"
-  project.tasks.each do |task|
-    puts "- Task #{task.name} is #{task.billable ? 'billable' : 'not billable'}"
-  end
-end
 ```
 
 ## Utilities

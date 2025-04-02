@@ -1,6 +1,6 @@
 # Changelog
 
-## [2.0.0] - 2025-04-02
+## [1.0.0] - 2025-04-02
 
 ### Added
 - Complete redesign with Ruby-esque API
@@ -30,6 +30,20 @@
 - Reorganized code structure for better maintainability
 - Updated documentation with new API examples
 
+## [0.1.2] - 2025-04-02
+
+### Added
+- Complete Activities API implementation:
+  - Single activity retrieval
+  - Bulk activity creation
+  - Activity timer control (start/stop)
+  - Activity disregard endpoint
+  - Activity deletion
+- Project management API endpoints:
+  - Archive/unarchive projects
+  - Project report operations
+  - Project group assignment
+
 ## [0.1.1] - 2024-02-27
 
 ### Added
@@ -44,3 +58,9 @@
 
 ## [0.1.0] - 2024-02-27
 - Initial release
+
+[unreleased]: https://github.com/starsong-consulting/moco-ruby/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/starsong-consulting/moco-ruby/compare/v0.1.2...v1.0.0
+[0.1.2]: https://github.com/starsong-consulting/moco-ruby/compare/v0.1.1...v0.1.2
+[0.1.1]: https://github.com/starsong-consulting/moco-ruby/compare/v0.1.0...v0.1.1
+[0.1.0]: https://github.com/starsong-consulting/moco-ruby/releases/tag/v0.1.0
