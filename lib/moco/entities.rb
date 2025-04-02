@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require_relative "helpers"
+
 module MOCO
   # Base entity class others inherit from, providing comparison, to_h, to_json
   class BaseEntity
@@ -67,7 +69,7 @@ module MOCO
                   :customer, :tag
 
     def to_s
-      "#{date} - #{hours}h (#{seconds}s) - #{project&.name} - #{task&.name}#{description.empty? ? "" : " (#{description})"} " \
+      "#{date} - #{Helpers.decimal_hours_to_civil(hours)}h (#{seconds}s) - #{project&.name} - #{task&.name}#{description.empty? ? "" : " (#{description})"} " \
         "(#{%i[billable billed].map { |x| (send(x) ? "" : "not ") + x.to_s }.join(", ")})"
     end
   end
