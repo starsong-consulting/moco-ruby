@@ -1,9 +1,11 @@
 # frozen_string_literal: true
 
+require_relative "collection_proxy"
+
 module MOCO
-  # Provides collection-level operations for entity types
-  # Handles querying, creating, updating, and deleting entities
+  # Provides high-level collection operations for MOCO entities
   class EntityCollection
+    include Enumerable
     attr_reader :client, :path, :entity_class_name
 
     def initialize(client, path, entity_class_name)
@@ -12,45 +14,46 @@ module MOCO
       @entity_class_name = entity_class_name
     end
 
-    def all(filters = {})
-      client.get(path, filters)
+    def all(params = {})
+      collection.all(params)
     end
 
     def find(id)
-      client.get("#{path}/#{id}")
-    end
-
-    def create(attributes)
-      client.post(path, attributes)
+      collection.find(id)
     end
 
     def where(filters = {})
-      all(filters)
+      collection.where(filters)
     end
 
-    def first(filters = {})
-      result = where(filters)
-      result.is_a?(Array) && !result.empty? ? result.first : nil
+    def create(attributes)
+      collection.create(attributes)
     end
 
-    def count(filters = {})
-      result = where(filters)
-      result.is_a?(Array) ? result.size : 0
+    def each(&)
+      all.each(&)
     end
 
-    def exists?(id)
-      find(id)
-      true
-    rescue MOCO::Error
-      false
+    def first
+      all.first
+    end
+
+    def count
+      all.count
     end
 
     def update(id, attributes)
-      client.put("#{path}/#{id}", attributes)
+      collection.update(id, attributes)
     end
 
     def delete(id)
-      client.delete("#{path}/#{id}")
+      collection.delete(id)
+    end
+
+    private
+
+    def collection
+      @collection ||= CollectionProxy.new(client, path, entity_class_name)
     end
   end
 end
