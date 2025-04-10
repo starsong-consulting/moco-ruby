@@ -2,6 +2,14 @@
 
 ## [Unreleased]
 
+## [1.0.0.alpha] - 2025-04-10
+
+### Added
+- Added support for nested resources with `NestedCollectionProxy` class:
+  - Enables ActiveRecord-style operations on nested resources (e.g., `project.tasks.create`)
+  - Supports proper path construction for nested API endpoints
+  - Implements `destroy_all` method for bulk deletion of nested resources
+
 ## [1.0.0] - 2025-04-10
 
 ### Added
@@ -81,7 +89,8 @@
 ## [0.1.0] - 2024-02-27
 - Initial release
 
-[Unreleased]: https://github.com/starsong-consulting/moco-ruby/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/starsong-consulting/moco-ruby/compare/v1.0.0.alpha...HEAD
+[1.0.0.alpha]: https://github.com/starsong-consulting/moco-ruby/compare/v1.0.0...v1.0.0.alpha
 [1.0.0]: https://github.com/starsong-consulting/moco-ruby/compare/v0.1.2...v1.0.0
 [0.1.2]: https://github.com/starsong-consulting/moco-ruby/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/starsong-consulting/moco-ruby/compare/v0.1.0...v0.1.1
