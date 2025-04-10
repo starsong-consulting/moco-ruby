@@ -2,9 +2,7 @@
 
 [![Gem Version](https://badge.fury.io/rb/moco-ruby.svg)](https://badge.fury.io/rb/moco-ruby)
 
-A Ruby Gem to interact with the [MOCO API](https://hundertzehn.github.io/mocoapp-api-docs/). This gem provides a modern, Ruby-esque interface (`MOCO::Client`) for interacting with the MOCO API V2.
-
-**Note:** The legacy V1 API client (`MOCO::API`) is deprecated and will be removed in a future version. Please migrate to `MOCO::Client`.
+A Ruby Gem to interact with the [MOCO API](https://hundertzehn.github.io/mocoapp-api-docs/). This gem provides a modern, Ruby-esque interface (`MOCO::Client`) for interacting with the MOCO API.
 
 ## Installation
 
@@ -16,14 +14,14 @@ If bundler is not being used to manage dependencies, install the gem by executin
 
     $ gem install moco-ruby
 
-## Usage (V2 API - `MOCO::Client`)
+## Usage
 
 ### Initialization
 
 ```ruby
 require 'moco'
 
-client = MOCO::Client.new(
+moco = MOCO::Client.new(
   subdomain: "your-subdomain", # Your MOCO subdomain
   api_key: "your-api-key"      # Your MOCO API key
 )
@@ -34,9 +32,9 @@ client = MOCO::Client.new(
 Collections are accessed dynamically using pluralized entity names (following Rails conventions):
 
 ```ruby
-projects    = client.projects
-activities  = client.activities
-users       = client.users
+projects    = moco.projects
+activities  = moco.activities
+users       = moco.users
 # ... and so on for all supported entities
 ```
 
@@ -44,22 +42,22 @@ users       = client.users
 
 ```ruby
 # Get all entities in a collection
-all_projects = client.projects.all
+all_projects = moco.projects.all
 
 # Get entities matching specific criteria
-active_projects = client.projects.where(active: true)
-recent_activities = client.activities.where(date: ">=2024-01-01")
+active_projects = moco.projects.where(active: true)
+recent_activities = moco.activities.where(date: ">=2024-01-01")
 
 # Get a specific entity by ID
-project = client.projects.find(12345)
-user = client.users.find(678)
+project = moco.projects.find(12345)
+user = moco.users.find(678)
 ```
 
 ### Creating Entities
 
 ```ruby
 # Create a new project
-new_project = client.projects.create(
+new_project = moco.projects.create(
   name: "New Website Project",
   customer_id: 987,
   billable: true
@@ -67,7 +65,7 @@ new_project = client.projects.create(
 puts "Created project: #{new_project.name} (ID: #{new_project.id})"
 
 # Create a new time entry (activity)
-new_activity = client.activities.create(
+new_activity = moco.activities.create(
   date: "2024-04-10",
   project_id: new_project.id,
   task_id: new_project.tasks.first.id, # Assumes project has tasks
@@ -82,7 +80,7 @@ puts "Created activity: #{new_activity.description} on #{new_activity.date}"
 Modify attributes and call `save`:
 
 ```ruby
-project = client.projects.find(12345)
+project = moco.projects.find(12345)
 project.name = "Updated Project Name"
 project.billable = false
 
@@ -93,20 +91,20 @@ else
 end
 
 # You can also update directly via the collection
-client.projects.update(12345, name: "Another Update", active: false)
+moco.projects.update(12345, name: "Another Update", active: false)
 ```
 
 ### Deleting Entities
 
 ```ruby
 # Delete by object
-activity = client.activities.find(9876)
+activity = moco.activities.find(9876)
 if activity&.delete
   puts "Activity deleted."
 end
 
 # Delete by ID via collection
-if client.activities.delete(9876)
+if moco.activities.delete(9876)
   puts "Activity deleted."
 end
 ```
@@ -116,10 +114,10 @@ end
 Entities provide methods to access related entities easily:
 
 ```ruby
-project = client.projects.find(12345)
+project = moco.projects.find(12345)
 
 # Get tasks associated with the project
-tasks = project.tasks # Returns an array of MOCO::Task objects
+tasks = project.tasks # Returns a collection proxy for tasks
 puts "Tasks for project '#{project.name}': #{tasks.map(&:name).join(', ')}"
 
 # Get activities for the project
@@ -132,13 +130,41 @@ puts "Customer: #{customer.name}"
 
 # ---
 
-activity = client.activities.find(9876)
+activity = moco.activities.find(9876)
 
 # Get the associated project, task, and user
 act_project = activity.project
 act_task = activity.task
 act_user = activity.user
 puts "Activity by #{act_user.firstname} on project '#{act_project.name}' (Task: #{act_task.name})"
+```
+
+### Nested Resources
+
+The gem supports ActiveRecord-style operations on nested resources:
+
+```ruby
+project = moco.projects.find(12345)
+
+# Create a new task for the project
+new_task = project.tasks.create(
+  name: "New Feature Development",
+  billable: true,
+  active: true,
+  budget: 40,
+  hourly_rate: 120
+)
+puts "Created task: #{new_task.name} (ID: #{new_task.id})"
+
+# Delete all tasks for a project
+project.tasks.destroy_all
+
+# Query tasks with conditions
+billable_tasks = project.tasks.where(billable: true).all
+puts "Billable tasks: #{billable_tasks.map(&:name).join(', ')}"
+
+# Find a specific task
+dev_task = project.tasks.find_by(name: "Development")
 ```
 
 ### Supported Entities
@@ -159,7 +185,7 @@ The gem supports all MOCO API entities with a Ruby-esque interface:
 - `Holiday`
 - `PlanningEntry`
 
-Access them via the client using their plural, snake_case names (e.g., `client.planning_entries`).
+Access them via the moco using their plural, snake_case names (e.g., `moco.planning_entries`).
 
 ## Utilities
 
