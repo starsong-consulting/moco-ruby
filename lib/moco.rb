@@ -25,6 +25,8 @@ require_relative "moco/client"
 require_relative "moco/connection"
 require_relative "moco/entity_collection"
 
+require_relative "moco/sync"
+
 module MOCO
   class Error < StandardError; end
 end

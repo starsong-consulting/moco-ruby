@@ -2,8 +2,21 @@
 
 ## [Unreleased]
 
+### Added
+- `MOCO::Helpers.decimal_hours_to_civil` for converting decimal hours to HH:MM format.
+
+### Changed
+- `MOCO::Activity#to_s` now uses `Helpers.decimal_hours_to_civil` for improved time display.
+- Refined core components like `Client`, `CollectionProxy`, and `Connection`.
+- Updated various entity classes (`Activity`, `BaseEntity`, `Presence`, `Project`) with internal improvements.
+- Updated utility scripts (`mocurl.rb`, `sync_activity.rb`).
+
+### Removed
+- Legacy V1 API (`lib/moco/api.rb`) as part of the transition to the new V2 client.
+
 ### Fixed
 - Ensure `EntityCollection#update` and `EntityCollection#delete` delegate to `CollectionProxy` for consistent behavior.
+- Refactored activity synchronization logic in `MOCO::Sync` to correctly handle unmatched activities and improve matching accuracy.
 
 ## [1.0.0] - 2025-04-02
 

@@ -21,56 +21,42 @@ module MOCO
       end
     end
 
-    %w[get post put patch delete].each do |method|
-      define_method(method) do |path, params = {}|
-        response = @conn.send(method, path, params)
-        build_entity(response.body, path)
-      end
-    end
+    # Define methods for HTTP verbs (get, post, put, patch, delete)
+    # These methods send the request and return the raw parsed JSON response body.
+    %w[get post put patch delete].each do |http_method|
+      define_method(http_method) do |path, params = {}|
+        response = @conn.send(http_method, path, params)
 
-    private
-
-    def build_entity(data, path)
-      return data.map { |item| build_entity(item, path) } if data.is_a?(Array)
-
-      entity_class = entity_class_for(path)
-
-      if entity_class && MOCO.const_defined?(entity_class)
-        MOCO.const_get(entity_class).new(client, data)
-      else
-        if entity_class
-          warn "Entity class #{entity_class} not defined. Using Struct."
-        else
-          warn "Could not determine entity type for path: #{path}. Using Struct."
+        # Raise an error for non-successful responses
+        unless response.success?
+          # Attempt to parse error details from the body, otherwise use status/reason
+          error_details = response.body.is_a?(Hash) ? response.body["message"] : response.body
+          # Explicitly pass nil for original_error, and response for the third argument
+          # raise MOCO::Error.new("MOCO API Error: #{response.status} #{response.reason_phrase}. Details: #{error_details}",
+          #                       nil, response)
+          # Use RuntimeError for now
+          raise "MOCO API Error: #{response.status} #{response.reason_phrase}. Details: #{error_details}"
         end
-        to_struct(data)
+
+        response.body
+      rescue Faraday::Error => e
+        # Wrap Faraday errors - pass e as the second argument (original_error)
+        # raise MOCO::Error.new("Faraday Connection Error: #{e.message}", e)
+        # Use RuntimeError for now
+        raise "Faraday Connection Error: #{e.message}"
       end
     end
 
-    def entity_class_for(path)
-      return nil unless path
-
-      # Extract entity type from path (e.g., "projects/123" -> "projects")
-      entity_type = path.split("/").first
-      return nil unless entity_type
-
-      # Convert to singular form and capitalize (e.g., "projects" -> "Project")
-      ActiveSupport::Inflector.classify(entity_type)
-    end
-
-    # Convert hash to Struct for unknown entity types
-    # rubocop:disable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
-    def to_struct(hash)
-      return hash unless hash.is_a?(Hash)
-      return hash if hash.empty?
-
-      keys = hash.keys.map(&:to_sym)
-      values = hash.values.map do |v|
-        v.is_a?(Hash) || (v.is_a?(Array) && v.any? && v.first.is_a?(Hash)) ? to_struct(v) : v
-      end
-
-      Struct.new(*keys).new(*values)
-    end
-    # rubocop:enable Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    # Define a custom error class for MOCO API errors
+    # Temporarily commented out
+    # class Error < StandardError
+    #   attr_reader :original_error, :response
+    #
+    #   def initialize(message, original_error = nil, response = nil)
+    #     super(message)
+    #     @original_error = original_error
+    #     @response = response
+    #   end
+    # end
   end
 end

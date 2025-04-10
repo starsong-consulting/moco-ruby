@@ -62,38 +62,55 @@ options[:api_key] ||= config["instances"].dig(subdomain, "api_key")
 
 warn "Error: No API key found for `#{subdomain}' and none given, continuing without" if options[:api_key].nil?
 
-api = MOCO::API.new(subdomain, options[:api_key])
+client = MOCO::Client.new(subdomain: subdomain, api_key: options[:api_key])
 
-case options[:method]
-when "GET"
-  result = api.get(url)
-when "DELETE"
-  result = api.delete(url)
-when "POST"
-  result = api.post(url, options[:data])
-when "PUT"
-  result = api.put(url, options[:data])
-when "PATCH"
-  result = api.patch(url, options[:data])
-else
-  puts "Error: Invalid HTTP Method: #{options[:method]}"
+# Extract path from URL
+path = url.gsub(%r{https?://#{subdomain}\.mocoapp\.com/api/v1/}, "")
+
+begin
+  # Make request using the client's connection directly
+  result = case options[:method]
+           when "GET"
+             client.connection.get(path)
+           when "DELETE"
+             client.connection.delete(path)
+           when "POST"
+             client.connection.post(path, options[:data])
+           when "PUT"
+             client.connection.put(path, options[:data])
+           when "PATCH"
+             client.connection.patch(path, options[:data])
+           else
+             puts "Error: Invalid HTTP Method: #{options[:method]}"
+             exit 1
+           end
+
+  if options[:verbose]
+    puts "> #{options[:method]} #{url}"
+    # Print request details if available
+    if result.env&.request_headers
+      puts(result.env.request_headers.map do |k, v|
+        "> #{k}: #{k == "Authorization" ? "#{v[0...16]}<REDACTED>#{v[-4..]}" : v}"
+      end)
+      puts ">"
+      puts result.env.request_body.split.map { |l| "> #{l}" }.join if result.env.request_body
+      puts "---"
+      puts "< #{result.status} #{result.reason_phrase}"
+      puts(result.headers.map { |k, v| "< #{k}: #{v}" })
+    else
+      puts "> Request details not available in this response format"
+    end
+    puts ""
+  end
+
+  # Format the response
+  response_data = result.body
+  if options[:no_format]
+    puts response_data.to_json
+  else
+    puts JSON.pretty_generate(response_data)
+  end
+rescue StandardError => e
+  puts "Error: #{e.message}"
   exit 1
-end
-
-if options[:verbose]
-  puts "> #{options[:method]} #{result.env.url}"
-  puts(result.env.request_headers.map do |k, v|
-         "> #{k}: #{k == "Authorization" ? "#{v[0...16]}<REDACTED>#{v[-4..]}" : v}"
-       end)
-  puts ">"
-  puts result.env.request_body.split.map { |l| "> #{l}" }.join if result.env.request_body
-  puts "---"
-  puts "< #{result.status} #{result.reason_phrase}"
-  puts(result.headers.map { |k, v| "< #{k}: #{v}" })
-  puts ""
-end
-if options[:no_format]
-  puts result.body.to_json
-else
-  puts JSON.pretty_generate(result.body)
 end

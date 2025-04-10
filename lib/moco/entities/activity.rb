@@ -37,20 +37,56 @@ module MOCO
     end
 
     # Associations
+    # Fetches the associated Project object.
     def project
-      association(:project)
+      # Check if the project attribute is a hash (contains ID) or already an object
+      project_data = attributes[:project]
+      return @project if defined?(@project) # Return memoized object if already fetched
+
+      @project = if project_data.is_a?(Hash) && project_data[:id]
+                   client.projects.find(project_data[:id])
+                 elsif project_data.is_a?(MOCO::Project) # If it was already processed into an object
+                   project_data
+                 else
+                   nil # No project associated or data missing
+                 end
     end
 
+    # Fetches the associated Task object.
     def task
-      association(:task)
+      task_data = attributes[:task]
+      return @task if defined?(@task)
+
+      @task = if task_data.is_a?(Hash) && task_data[:id]
+                client.tasks.find(task_data[:id])
+              elsif task_data.is_a?(MOCO::Task)
+                task_data
+              end
     end
 
+    # Fetches the associated User object.
     def user
-      association(:user)
+      user_data = attributes[:user]
+      return @user if defined?(@user)
+
+      @user = if user_data.is_a?(Hash) && user_data[:id]
+                client.users.find(user_data[:id])
+              elsif user_data.is_a?(MOCO::User)
+                user_data
+              end
     end
 
+    # Fetches the associated Customer (Company) object.
     def customer
-      association(:customer, "Company")
+      customer_data = attributes[:customer]
+      return @customer if defined?(@customer)
+
+      @customer = if customer_data.is_a?(Hash) && customer_data[:id]
+                    # Customer association points to the 'companies' collection
+                    client.companies.find(customer_data[:id])
+                  elsif customer_data.is_a?(MOCO::Company)
+                    customer_data
+                  end
     end
 
     def to_s

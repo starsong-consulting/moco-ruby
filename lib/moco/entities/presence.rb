@@ -4,8 +4,8 @@ module MOCO
   # Represents a MOCO presence entry
   # Provides methods for presence-specific operations and associations
   class Presence < BaseEntity
-    # Override entity_path to match API path
-    def entity_path
+    # Define the specific API path for this entity as a class method
+    def self.entity_path
       "users/presences"
     end
 

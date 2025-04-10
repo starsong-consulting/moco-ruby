@@ -64,12 +64,12 @@ config = YAML.load_file("config.yml")
 source_config = config["instances"].fetch(source_instance, nil)
 target_config = config["instances"].fetch(target_instance, nil)
 
-source_api = MOCO::API.new(source_instance, source_config["api_key"])
-target_api = MOCO::API.new(target_instance, target_config["api_key"])
+source_client = MOCO::Client.new(subdomain: source_instance, api_key: source_config["api_key"])
+target_client = MOCO::Client.new(subdomain: target_instance, api_key: target_config["api_key"])
 
 syncer = MOCO::Sync.new(
-  source_api,
-  target_api,
+  source_client,
+  target_client,
   project_match_threshold: options[:match_project_threshold],
   task_match_threshold: options[:match_task_threshold],
   filters: {

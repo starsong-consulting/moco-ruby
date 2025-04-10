@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 require "fuzzy_match"
-require_relative "api"
+require_relative "client"
 
 module MOCO
   # Match and map projects and tasks between MOCO instances and sync activities
@@ -9,9 +9,9 @@ module MOCO
     attr_reader :project_mapping, :task_mapping, :source_projects, :target_projects
     attr_accessor :project_match_threshold, :task_match_threshold, :dry_run
 
-    def initialize(source_instance_api, target_instance_api, **args)
-      @source_api = source_instance_api
-      @target_api = target_instance_api
+    def initialize(source_client, target_client, **args)
+      @source = source_client
+      @target = target_client
       @project_match_threshold = args.fetch(:project_match_threshold, 0.8)
       @task_match_threshold = args.fetch(:task_match_threshold, 0.45)
       @filters = args.fetch(:filters, {})
@@ -28,8 +28,8 @@ module MOCO
     def sync(&callbacks)
       results = []
 
-      source_activities_r = @source_api.get_activities(@filters.fetch(:source, {}))
-      target_activities_r = @target_api.get_activities(@filters.fetch(:target, {}))
+      source_activities_r = @source.activities.all(@filters.fetch(:source, {}))
+      target_activities_r = @target.activities.all(@filters.fetch(:target, {}))
 
       source_activities_grouped = source_activities_r.group_by(&:date).transform_values do |activities|
         activities.group_by(&:project)
@@ -70,14 +70,14 @@ module MOCO
               end
               callbacks&.call(:update, source_activity, best_match)
               unless @dry_run
-                results << @target_api.update_activity(best_match)
+                results << @target.activities.update(best_match)
                 callbacks&.call(:updated, source_activity, best_match, results.last)
               end
             when 0...60
               # <60 - no good match found, create new entry
               callbacks&.call(:create, source_activity, expected_target_activity)
               unless @dry_run
-                results << @target_api.create_activity(expected_target_activity)
+                results << @target.activities.create(expected_target_activity)
                 callbacks&.call(:created, source_activity, best_match, results.last)
               end
             end
@@ -95,7 +95,7 @@ module MOCO
         expected_target_activity = get_expected_target_activity(source_activity)
         callbacks&.call(:create, source_activity, expected_target_activity)
         unless @dry_run
-          results << @target_api.create_activity(expected_target_activity)
+          results << @target.activities.create(expected_target_activity)
           callbacks&.call(:created, source_activity, expected_target_activity, results.last)
         end
       end
@@ -151,8 +151,26 @@ module MOCO
     # rubocop:enable Metrics/AbcSize
 
     def fetch_assigned_projects
-      @source_projects = @source_api.get_assigned_projects(**@filters.fetch(:source, {}), active: "true")
-      @target_projects = @target_api.get_assigned_projects(**@filters.fetch(:target, {}), active: "true")
+      @source_projects = @source.projects.all(**@filters.fetch(:source, {}), active: "true")
+      @target_projects = @target.projects.all(**@filters.fetch(:target, {}), active: "true")
+
+      # Ensure we have proper collections
+      @source_projects = if @source_projects.is_a?(MOCO::EntityCollection)
+                           @source_projects
+                         else
+                           MOCO::EntityCollection.new(@source,
+                                                      "projects", "Project").tap do |c|
+                             c.instance_variable_set(:@items, [@source_projects])
+                           end
+                         end
+      @target_projects = if @target_projects.is_a?(MOCO::EntityCollection)
+                           @target_projects
+                         else
+                           MOCO::EntityCollection.new(@target,
+                                                      "projects", "Project").tap do |c|
+                             c.instance_variable_set(:@items, [@target_projects])
+                           end
+                         end
     end
 
     def build_initial_mappings
@@ -169,13 +187,37 @@ module MOCO
     end
 
     def match_project(target_project)
-      matcher = FuzzyMatch.new(@source_projects, read: :name)
-      matcher.find(target_project.name, threshold: @project_match_threshold)
+      # Create array of search objects manually since we can't call map on EntityCollection
+      searchable_projects = []
+
+      # Manually iterate since we can't rely on Enumerable methods
+      @source_projects.each do |project|
+        warn project.inspect
+        searchable_projects << { original: project, name: project.name }
+      end
+
+      matcher = FuzzyMatch.new(searchable_projects, read: :name)
+      match = matcher.find(target_project.name, threshold: @project_match_threshold)
+      match[:original] if match
     end
 
     def match_task(target_task, source_project)
-      matcher = FuzzyMatch.new(source_project.tasks, read: :name)
-      matcher.find(target_task.name, threshold: @task_match_threshold)
+      # Get tasks from the source project
+      tasks = source_project.tasks
+
+      # Create array of search objects manually since we can't rely on Enumerable methods
+
+      # Manually iterate through tasks
+      searchable_tasks = tasks.map do |task|
+        { original: task, name: task.name }
+      end
+
+      # Only proceed if we have tasks to match against
+      return nil if searchable_tasks.empty?
+
+      matcher = FuzzyMatch.new(searchable_tasks, read: :name)
+      match = matcher.find(target_task.name, threshold: @task_match_threshold)
+      match[:original] if match
     end
   end
 end
