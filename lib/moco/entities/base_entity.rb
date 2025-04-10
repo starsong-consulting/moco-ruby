@@ -60,6 +60,28 @@ module MOCO
       "#<#{self.class.name}:#{object_id} @attributes=#{@attributes.inspect}>"
     end
 
+    # Saves changes to the entity back to the API.
+    # Returns self on success for method chaining.
+    def save
+      return self if id.nil? # Can't save without an ID
+
+      # Determine the collection name from the class name
+      collection_name = ActiveSupport::Inflector.tableize(self.class.name.split("::").last).to_sym
+
+      # Check if the client responds to the collection method
+      if client.respond_to?(collection_name)
+        # Use the collection proxy to update the entity
+        updated_data = client.send(collection_name).update(id, attributes)
+
+        # Update local attributes with the response data
+        @attributes = updated_data.attributes if updated_data
+      else
+        warn "Warning: Client does not respond to collection '#{collection_name}' for saving entity."
+      end
+
+      self # Return self for method chaining
+    end
+
     private
 
     # Helper method to fetch associated objects based on data in attributes.
