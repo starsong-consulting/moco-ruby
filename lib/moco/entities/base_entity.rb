@@ -152,14 +152,22 @@ module MOCO
       type_name = data[:type] || data["type"]
 
       # Infer type from the key_hint if :type attribute is missing
-      # Example: If key_hint is :customer, infer type "company" or "customer"
-      # Example: If key_hint is :tasks, infer type "task" (singular)
-      type_name = ActiveSupport::Inflector.singularize(key_hint.to_s) if type_name.nil? && key_hint
+      if type_name.nil? && key_hint
+        # Special case: map :customer key to Company class
+        type_name = if key_hint == :customer
+                      "Company"
+                    else
+                      # General case: singularize the key hint (e.g., :tasks -> "task")
+                      ActiveSupport::Inflector.singularize(key_hint.to_s)
+                    end
+      end
 
       # If no type name could be determined, it's not a known entity structure
       return nil unless type_name
 
-      # Convert type name (e.g., "project", "user", "company") to class name
+      # Convert type name (e.g., "project", "user", "company", "Task") to class name
+      # If type_name is already classified (like "Company" from the special case),
+      # classify won't hurt it.
       class_name = ActiveSupport::Inflector.classify(type_name)
 
       # Check if the class exists within the MOCO module and is a BaseEntity subclass
