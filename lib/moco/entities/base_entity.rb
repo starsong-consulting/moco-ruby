@@ -82,6 +82,59 @@ module MOCO
       self # Return self for method chaining
     end
 
+    # Updates attributes and saves the entity in one step.
+    # Returns self on success for method chaining.
+    def update(new_attributes)
+      # Update attributes
+      new_attributes.each do |key, value|
+        send("#{key}=", value) if respond_to?("#{key}=")
+      end
+
+      # Save changes
+      save
+    end
+
+    # Deletes the entity from the API.
+    # Returns true on success, false on failure.
+    def destroy
+      return false if id.nil? # Can't destroy without an ID
+
+      # Determine the collection name from the class name
+      collection_name = ActiveSupport::Inflector.tableize(self.class.name.split("::").last).to_sym
+
+      # Check if the client responds to the collection method
+      if client.respond_to?(collection_name)
+        # Use the collection proxy to delete the entity
+        client.send(collection_name).delete(id)
+        true
+      else
+        warn "Warning: Client does not respond to collection '#{collection_name}' for destroying entity."
+        false
+      end
+    end
+
+    # Reloads the entity from the API.
+    # Returns self on success for method chaining.
+    def reload
+      return self if id.nil? # Can't reload without an ID
+
+      # Determine the collection name from the class name
+      collection_name = ActiveSupport::Inflector.tableize(self.class.name.split("::").last).to_sym
+
+      # Check if the client responds to the collection method
+      if client.respond_to?(collection_name)
+        # Use the collection proxy to find the entity
+        reloaded = client.send(collection_name).find(id)
+
+        # Update attributes with the reloaded data
+        @attributes = reloaded.attributes if reloaded
+      else
+        warn "Warning: Client does not respond to collection '#{collection_name}' for reloading entity."
+      end
+
+      self # Return self for method chaining
+    end
+
     private
 
     # Helper method to fetch associated objects based on data in attributes.

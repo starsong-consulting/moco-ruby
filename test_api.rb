@@ -58,11 +58,26 @@ begin
 
     # Test modifying and saving
     original_name = project.name
+    
+    # Test direct attribute modification and save
     project.name = "#{project.name} (test)"
     project.save
     puts "Updated project name to: #{project.name}"
-    project.name = original_name
-    project.save
+    
+    # Test update method
+    project.update(name: original_name)
+    puts "Restored project name via update(): #{project.name}"
+    
+    # Test reload method
+    project.reload
+    puts "Reloaded project from API: #{project.name}"
+    
+    # Test destroy method (commented out to prevent actual deletion)
+    # if project.destroy
+    #   puts "Project successfully deleted"
+    # else
+    #   puts "Failed to delete project"
+    # end
 
     # Test project tasks
     tasks = project.tasks

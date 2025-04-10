@@ -4,7 +4,11 @@
 
 ### Added
 - Implemented ActiveRecord-style query interface (`where`, `find`, `find_by`, `first`, `all`, `each`) via `CollectionProxy`.
-- Added `save` method to `BaseEntity` for persisting changes to entities.
+- Added ActiveRecord-style persistence methods to `BaseEntity`:
+  - `save` - Persist changes to an entity
+  - `update` - Update attributes and save in one step
+  - `destroy` - Delete an entity
+  - `reload` - Refresh an entity from the API
 
 ### Fixed
 - Correctly handle `:customer` key hint during entity initialization to return `MOCO::Company` object.
