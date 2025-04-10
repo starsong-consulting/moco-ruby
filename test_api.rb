@@ -58,20 +58,20 @@ begin
 
     # Test modifying and saving
     original_name = project.name
-    
+
     # Test direct attribute modification and save
     project.name = "#{project.name} (test)"
     project.save
     puts "Updated project name to: #{project.name}"
-    
+
     # Test update method
     project.update(name: original_name)
     puts "Restored project name via update(): #{project.name}"
-    
+
     # Test reload method
     project.reload
     puts "Reloaded project from API: #{project.name}"
-    
+
     # Test destroy method (commented out to prevent actual deletion)
     # if project.destroy
     #   puts "Project successfully deleted"
@@ -80,21 +80,29 @@ begin
     # end
 
     # Test project tasks
-    tasks = project.tasks
-    if tasks.is_a?(Array)
-      puts "  - Tasks: #{tasks.size} tasks"
+    tasks_proxy = project.tasks
+    if tasks_proxy.is_a?(MOCO::CollectionProxy)
+      tasks = tasks_proxy.all # Fetch the actual tasks
+      puts "  - Tasks: #{tasks.size} tasks (via CollectionProxy)"
       puts "    - First task: #{tasks.first.name}" if tasks.any?
+    elsif tasks_proxy.is_a?(Array)
+      puts "  - Tasks: #{tasks_proxy.size} tasks (via Array)"
+      puts "    - First task: #{tasks_proxy.first.name}" if tasks_proxy.any?
     else
-      puts "  - Tasks: Not available"
+      puts "  - Tasks: Not available (#{tasks_proxy.class})"
     end
 
     # Test project activities
-    activities = project.activities
-    if activities.is_a?(Array)
-      puts "  - Activities: #{activities.size} activities"
+    activities_proxy = project.activities
+    if activities_proxy.is_a?(MOCO::CollectionProxy)
+      activities = activities_proxy.all # Fetch the actual activities
+      puts "  - Activities: #{activities.size} activities (via CollectionProxy)"
       puts "    - First activity: #{activities.first.date} - #{activities.first.hours}h" if activities.any?
+    elsif activities_proxy.is_a?(Array)
+      puts "  - Activities: #{activities_proxy.size} activities (via Array)"
+      puts "    - First activity: #{activities_proxy.first.date} - #{activities_proxy.first.hours}h" if activities_proxy.any?
     else
-      puts "  - Activities: Not available"
+      puts "  - Activities: Not available (#{activities_proxy.class})"
     end
 
     # Test project customer association
@@ -122,21 +130,29 @@ begin
     puts "Company attributes: #{company.attributes.inspect}"
 
     # Test company projects
-    projects = company.projects
-    if projects.is_a?(Array)
-      puts "  - Projects: #{projects.size} projects"
+    projects_proxy = company.projects
+    if projects_proxy.is_a?(MOCO::CollectionProxy)
+      projects = projects_proxy.all # Fetch the actual projects
+      puts "  - Projects: #{projects.size} projects (via CollectionProxy)"
       puts "    - First project: #{projects.first.name}" if projects.any?
+    elsif projects_proxy.is_a?(Array)
+      puts "  - Projects: #{projects_proxy.size} projects (via Array)"
+      puts "    - First project: #{projects_proxy.first.name}" if projects_proxy.any?
     else
-      puts "  - Projects: Not available"
+      puts "  - Projects: Not available (#{projects_proxy.class})"
     end
 
     # Test company invoices
-    invoices = company.invoices
-    if invoices.is_a?(Array)
-      puts "  - Invoices: #{invoices.size} invoices"
+    invoices_proxy = company.invoices
+    if invoices_proxy.is_a?(MOCO::CollectionProxy)
+      invoices = invoices_proxy.all # Fetch the actual invoices
+      puts "  - Invoices: #{invoices.size} invoices (via CollectionProxy)"
       puts "    - First invoice: #{invoices.first.title}" if invoices.any?
+    elsif invoices_proxy.is_a?(Array)
+      puts "  - Invoices: #{invoices_proxy.size} invoices (via Array)"
+      puts "    - First invoice: #{invoices_proxy.first.title}" if invoices_proxy.any?
     else
-      puts "  - Invoices: Not available"
+      puts "  - Invoices: Not available (#{invoices_proxy.class})"
     end
   end
 rescue StandardError => e
@@ -155,21 +171,29 @@ begin
     puts "User attributes: #{user.attributes.inspect}"
 
     # Test user activities
-    activities = user.activities
-    if activities.is_a?(Array)
-      puts "  - Activities: #{activities.size} activities"
+    activities_proxy = user.activities
+    if activities_proxy.is_a?(MOCO::CollectionProxy)
+      activities = activities_proxy.all # Fetch the actual activities
+      puts "  - Activities: #{activities.size} activities (via CollectionProxy)"
       puts "    - First activity: #{activities.first.date} - #{activities.first.hours}h" if activities.any?
+    elsif activities_proxy.is_a?(Array)
+      puts "  - Activities: #{activities_proxy.size} activities (via Array)"
+      puts "    - First activity: #{activities_proxy.first.date} - #{activities_proxy.first.hours}h" if activities_proxy.any?
     else
-      puts "  - Activities: Not available"
+      puts "  - Activities: Not available (#{activities_proxy.class})"
     end
 
     # Test user presences
-    presences = user.presences
-    if presences.is_a?(Array)
-      puts "  - Presences: #{presences.size} presences"
+    presences_proxy = user.presences
+    if presences_proxy.is_a?(MOCO::CollectionProxy)
+      presences = presences_proxy.all # Fetch the actual presences
+      puts "  - Presences: #{presences.size} presences (via CollectionProxy)"
       puts "    - First presence: #{presences.first.date}" if presences.any?
+    elsif presences_proxy.is_a?(Array)
+      puts "  - Presences: #{presences_proxy.size} presences (via Array)"
+      puts "    - First presence: #{presences_proxy.first.date}" if presences_proxy.any?
     else
-      puts "  - Presences: Not available"
+      puts "  - Presences: Not available (#{presences_proxy.class})"
     end
   end
 rescue StandardError => e
