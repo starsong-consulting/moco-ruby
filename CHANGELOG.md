@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.0.0] - 2025-04-10
+
 ### Added
 - Implemented ActiveRecord-style query interface (`where`, `find`, `find_by`, `first`, `all`, `each`) via `CollectionProxy`.
 - Added ActiveRecord-style persistence methods to `BaseEntity`:
@@ -16,13 +18,6 @@
   - Enables ActiveRecord-style operations on nested resources (e.g., `project.tasks.create`)
   - Supports proper path construction for nested API endpoints
   - Implements `destroy_all` method for bulk deletion of nested resources
-
-### Fixed
-- Correctly handle `:customer` key hint during entity initialization to return `MOCO::Company` object.
-
-## [1.0.0] - 2025-04-10
-
-### Added
 - Complete redesign with Ruby-esque API
 - Chainable methods for fluent interface
 - Dynamic entity creation with Rails-style inflection
@@ -44,7 +39,6 @@
 - Automatic entity creation from API responses
 - Struct-based fallback for unknown entity types
 - Generic association method for handling relationships between entities
-- `MOCO::Helpers.decimal_hours_to_civil` for converting decimal hours to HH:MM format.
 
 ### Changed
 - Added ActiveSupport dependency for inflection methods
@@ -56,7 +50,7 @@
 - Updated utility scripts (`mocurl.rb`, `sync_activity.rb`).
 
 ### Removed
-- Legacy V1 API (`lib/moco/api.rb`) as part of the transition to the new V2 client.
+- Legacy API (`lib/moco/api.rb`) as part of the transition to the new client.
 
 ## [0.1.2] - 2025-04-02
 
