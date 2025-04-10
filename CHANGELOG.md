@@ -9,6 +9,8 @@
   - `update` - Update attributes and save in one step
   - `destroy` - Delete an entity
   - `reload` - Refresh an entity from the API
+- Added `has_many` method to `BaseEntity` for handling one-to-many associations, complementing the existing `association` method for one-to-one associations.
+- Refactored entity association methods in `Project`, `User`, and `Company` classes to use the new `has_many` method.
 
 ### Fixed
 - Correctly handle `:customer` key hint during entity initialization to return `MOCO::Company` object.

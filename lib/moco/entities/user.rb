@@ -11,15 +11,15 @@ module MOCO
 
     # Associations
     def activities
-      client.activities.where(user_id: id)
+      has_many(:activities)
     end
 
     def presences
-      client.presences.where(user_id: id)
+      has_many(:presences)
     end
 
     def holidays
-      client.holidays.where(user_id: id)
+      has_many(:holidays)
     end
 
     def full_name

@@ -6,19 +6,19 @@ module MOCO
   class Company < BaseEntity
     # Associations
     def projects
-      client.projects.where(company_id: id)
+      has_many(:projects)
     end
 
     def invoices
-      client.invoices.where(company_id: id)
+      has_many(:invoices)
     end
 
     def deals
-      client.deals.where(company_id: id)
+      has_many(:deals)
     end
 
     def contacts
-      client.contacts.where(company_id: id)
+      has_many(:contacts)
     end
 
     def to_s

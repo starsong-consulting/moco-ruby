@@ -135,8 +135,6 @@ module MOCO
       self # Return self for method chaining
     end
 
-    private
-
     # Helper method to fetch associated objects based on data in attributes.
     # Uses memoization to avoid repeated API calls.
     # association_name: Symbol representing the association (e.g., :project, :customer).
@@ -173,6 +171,43 @@ module MOCO
       # If data is not an object or a hash with an ID, return nil.
       @_association_cache[association_name] = nil
     end
+
+    # Helper method to fetch associated collections based on a foreign key.
+    # Uses memoization to avoid repeated API calls.
+    # association_name: Symbol representing the association (e.g., :tasks, :activities).
+    # foreign_key: Symbol representing the foreign key to use (e.g., :project_id).
+    # target_class_name_override: String specifying the target class if it differs
+    #                             from the classified association name (e.g., "Task" for :tasks).
+    def has_many(association_name, foreign_key = nil, target_class_name_override = nil)
+      # Initialize cache if it doesn't exist
+      @_association_cache ||= {}
+      # Return cached collection if available
+      return @_association_cache[association_name] if @_association_cache.key?(association_name)
+
+      # If the association data is already in attributes and is an array of entities, use it directly
+      association_data = attributes[association_name]
+      if association_data.is_a?(Array) && association_data.all? { |item| item.is_a?(MOCO::BaseEntity) }
+        return @_association_cache[association_name] = association_data
+      end
+
+      # Otherwise, fetch the collection from the API
+      target_class_name = target_class_name_override || ActiveSupport::Inflector.classify(association_name.to_s)
+      collection_name = ActiveSupport::Inflector.tableize(target_class_name).to_sym # e.g., "Task" -> :tasks
+
+      # Determine the foreign key to use
+      fk = foreign_key || :"#{ActiveSupport::Inflector.underscore(self.class.name.split("::").last)}_id"
+
+      # Check if the client responds to the collection method (e.g., client.tasks)
+      if client.respond_to?(collection_name)
+        # Fetch the collection using the appropriate collection proxy
+        @_association_cache[association_name] = client.send(collection_name).where(fk => id)
+      else
+        warn "Warning: Client does not respond to collection '#{collection_name}' for association '#{association_name}'."
+        @_association_cache[association_name] = []
+      end
+    end
+
+    private
 
     # Defines getter and setter methods for each key in the @attributes hash.
     def define_attribute_methods
