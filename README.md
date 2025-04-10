@@ -1,6 +1,10 @@
-# moco-ruby
+# MOCO Ruby Gem
 
-A Ruby Gem to interact with the [MOCO API](https://hundertzehn.github.io/mocoapp-api-docs/).
+[![Gem Version](https://badge.fury.io/rb/moco-ruby.svg)](https://badge.fury.io/rb/moco-ruby)
+
+A Ruby Gem to interact with the [MOCO API](https://hundertzehn.github.io/mocoapp-api-docs/). This gem provides a modern, Ruby-esque interface (`MOCO::Client`) for interacting with the MOCO API V2.
+
+**Note:** The legacy V1 API client (`MOCO::API`) is deprecated and will be removed in a future version. Please migrate to `MOCO::Client`.
 
 ## Installation
 
@@ -12,132 +16,204 @@ If bundler is not being used to manage dependencies, install the gem by executin
 
     $ gem install moco-ruby
 
-## Usage
+## Usage (V2 API - `MOCO::Client`)
+
+### Initialization
 
 ```ruby
-# Initialize client
-moco = MOCO::Client.new(subdomain: "your-subdomain", api_key: "your-api-key")
+require 'moco'
 
-# Get all projects
-projects = moco.projects.all
-
-# Get a specific project
-project = moco.projects.find(123)
-
-# Chain operations
-project.archive.assign_to_group(456)
-
-# Work with activities
-activities = project.activities
-activity = activities.create(
-  date: "2023-01-01",
-  task_id: project.tasks.first.id,
-  hours: 2,
-  description: "Development work"
+client = MOCO::Client.new(
+  subdomain: "your-subdomain", # Your MOCO subdomain
+  api_key: "your-api-key"      # Your MOCO API key
 )
+```
 
-# Start and stop timers
-activity.start_timer
-# ... do work ...
-activity.stop_timer
+### Accessing Collections
 
-# Automatic entity creation from API responses
-report = moco.get("projects/123/report")
+Collections are accessed dynamically using pluralized entity names (following Rails conventions):
+
+```ruby
+projects    = client.projects
+activities  = client.activities
+users       = client.users
+# ... and so on for all supported entities
+```
+
+### Fetching Entities
+
+```ruby
+# Get all entities in a collection
+all_projects = client.projects.all
+
+# Get entities matching specific criteria
+active_projects = client.projects.where(active: true)
+recent_activities = client.activities.where(date: ">=2024-01-01")
+
+# Get a specific entity by ID
+project = client.projects.find(12345)
+user = client.users.find(678)
+```
+
+### Creating Entities
+
+```ruby
+# Create a new project
+new_project = client.projects.create(
+  name: "New Website Project",
+  customer_id: 987,
+  billable: true
+)
+puts "Created project: #{new_project.name} (ID: #{new_project.id})"
+
+# Create a new time entry (activity)
+new_activity = client.activities.create(
+  date: "2024-04-10",
+  project_id: new_project.id,
+  task_id: new_project.tasks.first.id, # Assumes project has tasks
+  hours: 3.5,
+  description: "Implemented feature X"
+)
+puts "Created activity: #{new_activity.description} on #{new_activity.date}"
+```
+
+### Updating Entities
+
+Modify attributes and call `save`:
+
+```ruby
+project = client.projects.find(12345)
+project.name = "Updated Project Name"
+project.billable = false
+
+if project.save
+  puts "Project updated successfully."
+else
+  puts "Failed to update project: #{project.errors.full_messages.join(", ")}" # Assuming error handling exists
+end
+
+# You can also update directly via the collection
+client.projects.update(12345, name: "Another Update", active: false)
+```
+
+### Deleting Entities
+
+```ruby
+# Delete by object
+activity = client.activities.find(9876)
+if activity&.delete
+  puts "Activity deleted."
+end
+
+# Delete by ID via collection
+if client.activities.delete(9876)
+  puts "Activity deleted."
+end
 ```
 
 ### Entity Associations
 
-Entities have association methods for related entities:
+Entities provide methods to access related entities easily:
 
 ```ruby
-# Project associations
-project.tasks          # => Array of Task objects
-project.activities     # => Array of Activity objects
-project.customer       # => Company object
+project = client.projects.find(12345)
 
-# Activity associations
-activity.project       # => Project object
-activity.task          # => Task object
-activity.user          # => User object
+# Get tasks associated with the project
+tasks = project.tasks # Returns an array of MOCO::Task objects
+puts "Tasks for project '#{project.name}': #{tasks.map(&:name).join(', ')}"
 
-# User associations
-user.activities        # => Array of Activity objects
-user.presences         # => Array of Presence objects
-user.holidays          # => Array of Holiday objects
+# Get activities for the project
+project_activities = project.activities
+puts "Activities count: #{project_activities.size}"
+
+# Get the customer (company) for the project
+customer = project.customer # Returns a MOCO::Company object
+puts "Customer: #{customer.name}"
+
+# ---
+
+activity = client.activities.find(9876)
+
+# Get the associated project, task, and user
+act_project = activity.project
+act_task = activity.task
+act_user = activity.user
+puts "Activity by #{act_user.firstname} on project '#{act_project.name}' (Task: #{act_task.name})"
 ```
 
 ### Supported Entities
 
 The gem supports all MOCO API entities with a Ruby-esque interface:
 
-- Project
-- Activity
-- User
-- Company
-- Task
-- Invoice
-- Deal
-- Expense
-- WebHook
-- Schedule
-- Presence
-- Holiday
-- PlanningEntry
+- `Project`
+- `Activity`
+- `User`
+- `Company`
+- `Task`
+- `Invoice`
+- `Deal`
+- `Expense`
+- `WebHook`
+- `Schedule`
+- `Presence`
+- `Holiday`
+- `PlanningEntry`
 
-### Dynamic Collection Access
-
-The client dynamically handles any collection name that follows Rails conventions:
-
-```ruby
-# These all work automatically
-moco.projects.all
-moco.activities.where(date: "2023-01-01")
-moco.users.find(123)
-moco.companies.create(name: "New Company")
-moco.invoices.where(status: "draft")
-moco.deals.all
-moco.expenses.where(billable: true)
-moco.web_hooks.all
-moco.schedules.where(date: "2023-01-01")
-moco.presences.all
-moco.holidays.where(year: 2023)
-moco.planning_entries.all
-```
+Access them via the client using their plural, snake_case names (e.g., `client.planning_entries`).
 
 ## Utilities
 
-Utilities can use `config.yml` to fetch instance data and other configuration. For format, see `config.yml.sample`.
+These command-line utilities provide helpful shortcuts. They can use credentials and configuration from a `config.yml` file (see `config.yml.sample`) in the current directory or accept parameters.
 
-### mocurl
+### `mocurl`
 
-Run an API request against a MOCO instance and return the result nicely formatted.
-Use config.yml or specify api key with `-a`.
+A wrapper around `curl` to easily make authenticated requests to your MOCO instance API. Useful for testing or exploring endpoints.
 
 ```
 Usage: mocurl.rb [options] url
        mocurl.rb [options] subdomain path
-    -X, --method METHOD              Set HTTP method to use
-    -d, --data DATA                  Data to send to server, JSON format
-    -a, --api-key API_KEY            Manually specify MOCO API key
-    -n, --no-format                  Disable JSON pretty-printing
+    -X, --method METHOD              Set HTTP method to use (GET, POST, PUT, DELETE)
+    -d, --data DATA                  Data to send to server (JSON format) for POST/PUT
+    -a, --api-key API_KEY            Manually specify MOCO API key (overrides config.yml)
+    -n, --no-format                  Disable JSON pretty-printing of the response
     -v, --verbose                    Show additional request and response information
     -h, --help                       Show this message
 ```
+**Example:** `mocurl.rb your-subdomain projects/12345`
 
-### sync_activity
+### `sync_activity`
 
-Sync activity data (time entries) from one instance to another, fuzzy matching projects and tasks.
-It is highly recommended to use filter options (`--from`, `--to`) and to use `--dry-run` first to check the matching performance.
+Syncs activity data (time entries) between two MOCO instances (source and target). It uses fuzzy matching to map projects and tasks between the instances.
+
+**Important:**
+*   Always use `--dry-run` first to verify the matching and intended actions.
+*   Use date filters (`--from`, `--to`) to limit the scope.
 
 ```
-Usage: sync_activity.rb [options] source target
-    -f, --from DATE                  Start date (YYYY-MM-DD)
-    -t, --to DATE                    End date (YYYY-MM-DD)
-    -p, --project PROJECT_ID         Project ID to filter by
-    -c, --company COMPANY_ID         Company ID to filter by
-    -g, --term TERM                  Term to filter for
-    -n, --dry-run                    Match only, but do not edit data
+Usage: sync_activity.rb [options] source_subdomain target_subdomain
+    -f, --from DATE                  Start date for sync (YYYY-MM-DD)
+    -t, --to DATE                    End date for sync (YYYY-MM-DD)
+    -p, --project PROJECT_ID         Source Project ID to filter by (optional)
+    -c, --company COMPANY_ID         Source Company ID to filter by (optional)
+    -g, --term TERM                  Term to filter source activities by (optional)
+    -n, --dry-run                    Perform matching and show planned actions, but do not modify target instance
         --match-project-threshold VALUE
-                                     Project matching threshold (0.0 - 1.0), default 0.8
-        --match-task-threshold VALUE Task matching threshold (0.0 - 1.0), default 0.45
+                                     Fuzzy match threshold for projects (0.0 - 1.0), default 0.8
+        --match-task-threshold VALUE Fuzzy match threshold for tasks (0.0 - 1.0), default 0.45
+    -h, --help                       Show this message
 ```
+**Example:** `sync_activity.rb --from 2024-04-01 --to 2024-04-10 --dry-run source-instance target-instance`
+
+## Development
+
+After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+
+To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+
+## Contributing
+
+Bug reports and pull requests are welcome on GitHub at https://github.com/starsong-consulting/moco-ruby.
+
+## License
+
+The gem is available as open source under the terms of the [MIT License](https://opensource.org/licenses/MIT).
