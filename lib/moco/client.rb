@@ -13,13 +13,17 @@ module MOCO
 
     # Dynamically handle entity collection access (e.g., client.projects)
     def method_missing(name, *args, &)
+      # Check if the method name corresponds to a known plural entity type
       if collection_name?(name)
-        @collections[name] ||= EntityCollection.new(
+        # Return a CollectionProxy directly for chainable queries
+        # Cache it so subsequent calls return the same proxy instance
+        @collections[name] ||= CollectionProxy.new(
           self,
-          name.to_s,
-          ActiveSupport::Inflector.classify(name.to_s)
+          name.to_s, # Pass the plural name (e.g., "projects") as the path hint
+          ActiveSupport::Inflector.classify(name.to_s) # Get class name (e.g., "Project")
         )
       else
+        # Delegate to superclass for non-collection methods
         super
       end
     end

@@ -2,6 +2,12 @@
 
 ## [Unreleased]
 
+### Added
+- Implemented ActiveRecord-style query interface (`where`, `find`, `find_by`, `first`, `all`, `each`) via `CollectionProxy`.
+
+### Fixed
+- Correctly handle `:customer` key hint during entity initialization to return `MOCO::Company` object.
+
 ## [1.0.0] - 2025-04-10
 
 ### Added
