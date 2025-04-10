@@ -4,7 +4,7 @@
 require "English"
 require_relative "lib/moco"
 
-# Initialize client with starsong credentials
+# Initialize client with test credentials
 client = MOCO::Client.new(
   subdomain: ENV.fetch("MOCO_API_TEST_SUBDOMAIN", nil),
   api_key: ENV.fetch("MOCO_API_TEST_API_KEY", nil)
