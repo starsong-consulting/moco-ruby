@@ -23,6 +23,8 @@ require_relative "moco/entities/holiday"
 require_relative "moco/entities/planning_entry"
 require_relative "moco/client"
 require_relative "moco/connection"
+require_relative "moco/collection_proxy"
+require_relative "moco/nested_collection_proxy"
 require_relative "moco/entity_collection"
 
 require_relative "moco/sync"

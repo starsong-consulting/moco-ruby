@@ -178,7 +178,8 @@ module MOCO
     # foreign_key: Symbol representing the foreign key to use (e.g., :project_id).
     # target_class_name_override: String specifying the target class if it differs
     #                             from the classified association name (e.g., "Task" for :tasks).
-    def has_many(association_name, foreign_key = nil, target_class_name_override = nil)
+    # nested: Boolean indicating if this is a nested resource (e.g., project.tasks)
+    def has_many(association_name, foreign_key = nil, target_class_name_override = nil, nested = false)
       # Initialize cache if it doesn't exist
       @_association_cache ||= {}
       # Return cached collection if available
@@ -197,9 +198,18 @@ module MOCO
       # Determine the foreign key to use
       fk = foreign_key || :"#{ActiveSupport::Inflector.underscore(self.class.name.split("::").last)}_id"
 
-      # Check if the client responds to the collection method (e.g., client.tasks)
-      if client.respond_to?(collection_name)
-        # Fetch the collection using the appropriate collection proxy
+      # Check if this is a nested resource
+      if nested
+        # For nested resources, create a NestedCollectionProxy
+        require_relative "../nested_collection_proxy"
+        @_association_cache[association_name] = MOCO::NestedCollectionProxy.new(
+          client,
+          self,
+          collection_name,
+          target_class_name
+        )
+      elsif client.respond_to?(collection_name)
+        # For regular resources, use the standard collection proxy with a filter
         @_association_cache[association_name] = client.send(collection_name).where(fk => id)
       else
         warn "Warning: Client does not respond to collection '#{collection_name}' for association '#{association_name}'."

@@ -11,6 +11,11 @@
   - `reload` - Refresh an entity from the API
 - Added `has_many` method to `BaseEntity` for handling one-to-many associations, complementing the existing `association` method for one-to-one associations.
 - Refactored entity association methods in `Project`, `User`, and `Company` classes to use the new `has_many` method.
+- Added comprehensive project lifecycle test that creates a project, adds tasks and activities, then cleans up.
+- Added support for nested resources with `NestedCollectionProxy` class:
+  - Enables ActiveRecord-style operations on nested resources (e.g., `project.tasks.create`)
+  - Supports proper path construction for nested API endpoints
+  - Implements `destroy_all` method for bulk deletion of nested resources
 
 ### Fixed
 - Correctly handle `:customer` key hint during entity initialization to return `MOCO::Company` object.

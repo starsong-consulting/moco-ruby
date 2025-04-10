@@ -136,15 +136,15 @@ module MOCO
       @records # Return the loaded records
     end
 
-    private
-
-    # Returns the loaded entity class constant.
-    attr_reader :entity_class
+    protected
 
     # Flag indicating if records have been loaded from the API.
     def loaded?
       @loaded
     end
+
+    # Returns the loaded entity class constant.
+    attr_reader :entity_class
 
     # Determines the base API path for the entity.
     # Uses entity_path method if defined, otherwise uses the pluralized name.
@@ -165,6 +165,8 @@ module MOCO
       # Fallback: Use the pluralized/tableized version of the entity name or the provided path.
       ActiveSupport::Inflector.tableize(path_or_entity_name.to_s)
     end
+
+    private
 
     # Wraps the raw API response (Hash or Array of Hashes) into entity objects.
     def wrap_response(response_body)
