@@ -14,8 +14,8 @@ module MOCO
       @entity_class_name = entity_class_name
     end
 
-    def all(params = {})
-      collection.all(params)
+    def all
+      collection.all
     end
 
     def find(id)
@@ -31,7 +31,7 @@ module MOCO
     end
 
     def each(&)
-      all.each(&)
+      collection.each(&)
     end
 
     def first

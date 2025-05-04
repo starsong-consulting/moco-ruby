@@ -1,6 +1,10 @@
-# Changelog
+# # Changelog
 
 ## [Unreleased]
+
+### Fixed
+- Fixed activity synchronization to properly identify existing activities in target system
+- Added remote_id accessor to Activity class to prevent duplicate activity creation
 
 ## [1.0.0.alpha] - 2025-04-10
 
