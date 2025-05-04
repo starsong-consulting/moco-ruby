@@ -7,7 +7,7 @@ module MOCO
   # Match and map projects and tasks between MOCO instances and sync activities
   class Sync
     attr_reader :project_mapping, :task_mapping, :source_projects, :target_projects
-    attr_accessor :project_match_threshold, :task_match_threshold, :dry_run
+    attr_accessor :project_match_threshold, :task_match_threshold, :dry_run, :debug
 
     def initialize(source_client, target_client, **args)
       @source = source_client
@@ -16,6 +16,7 @@ module MOCO
       @task_match_threshold = args.fetch(:task_match_threshold, 0.45)
       @filters = args.fetch(:filters, {})
       @dry_run = args.fetch(:dry_run, false)
+      @debug = args.fetch(:debug, false)
 
       @project_mapping = {}
       @task_mapping = {}
@@ -28,77 +29,132 @@ module MOCO
     def sync(&callbacks)
       results = []
 
-      source_activities_r = @source.activities.all(@filters.fetch(:source, {}))
-      target_activities_r = @target.activities.all(@filters.fetch(:target, {}))
+      source_activity_filters = @filters.fetch(:source, {})
+      source_activities_r = @source.activities.where(source_activity_filters).all
 
+      target_activity_filters = @filters.fetch(:target, {})
+      target_activities_r = @target.activities.where(target_activity_filters).all
+
+      # Group activities by date and then by project_id for consistent lookups
       source_activities_grouped = source_activities_r.group_by(&:date).transform_values do |activities|
-        activities.group_by(&:project)
+        activities.group_by { |a| a.project&.id } # Group by project ID
       end
       target_activities_grouped = target_activities_r.group_by(&:date).transform_values do |activities|
-        activities.group_by(&:project)
+        activities.group_by { |a| a.project&.id } # Group by project ID
       end
 
       used_source_activities = []
       used_target_activities = []
 
-      source_activities_grouped.each do |date, activities_by_project|
-        activities_by_project.each do |project, source_activities|
-          target_activities = target_activities_grouped.fetch(date, {}).fetch(@project_mapping[project.id], [])
-          next if source_activities.empty? || target_activities.empty?
+      debug_log "Starting main sync loop..."
+      source_activities_grouped.each do |date, activities_by_project_id|
+        debug_log "Processing date: #{date}"
+        activities_by_project_id.each do |source_project_id, source_activities|
+          debug_log "  Processing source project ID: #{source_project_id} (#{source_activities.count} activities)"
+          # Find the corresponding target project ID using the mapping
+          target_project_object = @project_mapping[source_project_id]
+          unless target_project_object
+            debug_log "    Skipping - Source project ID #{source_project_id} not mapped."
+            next
+          end
+
+          target_project_id = target_project_object.id
+          # Fetch target activities using the target project ID
+          target_activities = target_activities_grouped.fetch(date, {}).fetch(target_project_id, [])
+          debug_log "    Found #{target_activities.count} target activities for target project ID: #{target_project_id}"
+
+          if source_activities.empty? || target_activities.empty?
+             debug_log "    Skipping - No source or target activities for this date/project pair."
+             next
+          end
 
           matches = calculate_matches(source_activities, target_activities)
+          debug_log "    Calculated #{matches.count} potential matches."
           matches.sort_by! { |match| -match[:score] }
 
+          debug_log "    Entering matches loop..."
           matches.each do |match|
             source_activity, target_activity = match[:activity]
             score = match[:score]
+            debug_log "      Match Pair: Score=#{score}, Source=#{source_activity.id}, Target=#{target_activity.id}"
 
-            next if used_source_activities.include?(source_activity) || used_target_activities.include?(target_activity)
+            if used_source_activities.include?(source_activity) || used_target_activities.include?(target_activity)
+              debug_log "        Skipping match pair - already used: Source used=#{used_source_activities.include?(source_activity)}, Target used=#{used_target_activities.include?(target_activity)}"
+              next
+            end
 
-            best_score = score
+            best_score = score # Since we sorted, this is the best score for this unused pair
             best_match = target_activity
             expected_target_activity = get_expected_target_activity(source_activity)
+            debug_log "        Processing best score #{best_score} for Source=#{source_activity.id}"
 
             case best_score
             when 100
+              debug_log "          Case 100: Equal"
               # 100 - perfect match found, nothing needs doing
               callbacks&.call(:equal, source_activity, expected_target_activity)
+              # Mark both as used
+              debug_log "            Marking Source=#{source_activity.id} and Target=#{target_activity.id} as used."
+              used_source_activities << source_activity
+              used_target_activities << target_activity
             when 60...100
+              debug_log "          Case 60-99: Update"
               # >=60 <100 - match with some differences
               expected_target_activity.to_h.except(:id, :user, :customer).each do |k, v|
+                debug_log "            Updating attribute #{k} on Target=#{target_activity.id}"
                 best_match.send("#{k}=", v)
               end
               callbacks&.call(:update, source_activity, best_match)
               unless @dry_run
-                results << @target.activities.update(best_match)
+                debug_log "            Executing API update for Target=#{target_activity.id}"
+                results << @target.activities.update(best_match.id, best_match.attributes) # Pass ID and attributes
                 callbacks&.call(:updated, source_activity, best_match, results.last)
               end
+              # Mark both as used
+              debug_log "            Marking Source=#{source_activity.id} and Target=#{target_activity.id} as used."
+              used_source_activities << source_activity
+              used_target_activities << target_activity
             when 0...60
-              # <60 - no good match found, create new entry
-              callbacks&.call(:create, source_activity, expected_target_activity)
-              unless @dry_run
-                results << @target.activities.create(expected_target_activity)
-                callbacks&.call(:created, source_activity, best_match, results.last)
-              end
+              debug_log "          Case 0-59: Low score, doing nothing for this pair."
+              # <60 - Low score for this specific pair. Do nothing here.
+              # Creation is handled later if source_activity remains unused.
+              nil # Explicitly do nothing
             end
-
-            used_source_activities << source_activity
-            used_target_activities << target_activity
+            # Only mark activities as used if score >= 60 (handled within the case branches above)
           end
+          debug_log "    Finished matches loop."
         end
+        debug_log "  Finished processing project IDs for date #{date}."
       end
+      debug_log "Finished main sync loop."
 
+      # Second loop: Create source activities that were never used (i.e., had no match >= 60)
+      debug_log "Starting creation loop..."
       source_activities_r.each do |source_activity|
-        next if used_source_activities.include?(source_activity)
-        next unless @project_mapping[source_activity.project.id]
+        if used_source_activities.include?(source_activity)
+          debug_log "  Skipping creation for Source=#{source_activity.id} - already used."
+          next
+        end
+        # Use safe navigation in case project is nil
+        source_project_id = source_activity.project&.id
+        unless @project_mapping[source_project_id]
+          debug_log "  Skipping creation for Source=#{source_activity.id} - project #{source_project_id} not mapped."
+          next
+        end
 
+        debug_log "  Processing creation for Source=#{source_activity.id}"
         expected_target_activity = get_expected_target_activity(source_activity)
         callbacks&.call(:create, source_activity, expected_target_activity)
         unless @dry_run
-          results << @target.activities.create(expected_target_activity)
-          callbacks&.call(:created, source_activity, expected_target_activity, results.last)
+          debug_log "    Executing API create."
+          # Pass attributes hash to create
+          created_activity = @target.activities.create(expected_target_activity.attributes)
+          results << created_activity
+          # Pass the actual created activity object to the callback
+          callbacks&.call(:created, source_activity, created_activity, results.last)
         end
       end
+      debug_log "Finished creation loop."
 
       results
     end
@@ -106,11 +162,31 @@ module MOCO
 
     private
 
+    def debug_log(message)
+      warn "[SYNC DEBUG] #{message}" if @debug
+    end
+
     def get_expected_target_activity(source_activity)
-      source_activity.dup.tap do |a|
-        a.task = @task_mapping[source_activity.task.id]
-        a.project = @project_mapping[source_activity.project.id]
-      end
+      # Create a duplicate of the source activity
+      new_activity = source_activity.dup
+      
+      # Get the attributes hash
+      attrs = new_activity.instance_variable_get(:@attributes)
+      
+      # Store the mapped task and project objects for reference
+      mapped_task = @task_mapping[source_activity.task.id]
+      mapped_project = @project_mapping[source_activity.project.id]
+      
+      # Set the task_id and project_id attributes instead of the full objects
+      attrs[:task_id] = mapped_task.id if mapped_task
+      attrs[:project_id] = mapped_project.id if mapped_project
+      
+      # Remove the full objects from the attributes hash
+      attrs.delete(:task)
+      attrs.delete(:project)
+      
+      # Return the modified activity
+      new_activity
     end
 
     def calculate_matches(source_activities, target_activities)
@@ -151,26 +227,17 @@ module MOCO
     # rubocop:enable Metrics/AbcSize
 
     def fetch_assigned_projects
-      @source_projects = @source.projects.all(**@filters.fetch(:source, {}), active: "true")
-      @target_projects = @target.projects.all(**@filters.fetch(:target, {}), active: "true")
+      # Use .projects.assigned for the source, standard .projects for the target
+      source_filters = @filters.fetch(:source, {}).merge(active: "true")
+      # Get the proxy, then fetch all results into the instance variable
+      @source_projects = @source.projects.assigned.where(source_filters).all
 
-      # Ensure we have proper collections
-      @source_projects = if @source_projects.is_a?(MOCO::EntityCollection)
-                           @source_projects
-                         else
-                           MOCO::EntityCollection.new(@source,
-                                                      "projects", "Project").tap do |c|
-                             c.instance_variable_set(:@items, [@source_projects])
-                           end
-                         end
-      @target_projects = if @target_projects.is_a?(MOCO::EntityCollection)
-                           @target_projects
-                         else
-                           MOCO::EntityCollection.new(@target,
-                                                      "projects", "Project").tap do |c|
-                             c.instance_variable_set(:@items, [@target_projects])
-                           end
-                         end
+      target_filters = @filters.fetch(:target, {}).merge(active: "true")
+      # Get the proxy, then fetch all results into the instance variable
+      @target_projects = @target.projects.where(target_filters).all
+
+      # NOTE: The @source_projects and @target_projects are now Arrays of entities,
+      #       not CollectionProxy or EntityCollection objects.
     end
 
     def build_initial_mappings
@@ -192,7 +259,7 @@ module MOCO
 
       # Manually iterate since we can't rely on Enumerable methods
       @source_projects.each do |project|
-        warn project.inspect
+        debug_log "Checking source project: #{project.inspect}" if @debug
         searchable_projects << { original: project, name: project.name }
       end
 

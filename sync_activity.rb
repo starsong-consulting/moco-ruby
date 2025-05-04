@@ -10,7 +10,8 @@ options = {
   to: nil,
   project: nil,
   match_project_threshold: 0.8,
-  match_task_threshold: 0.45
+  match_task_threshold: 0.45,
+  debug: false
 }
 
 OptionParser.new do |opts|
@@ -47,6 +48,10 @@ OptionParser.new do |opts|
   opts.on("--match-task-threshold VALUE", Float, "Task matching threshold (0.0 - 1.0), default 0.45") do |val|
     options[:match_task_threshold] = val
   end
+
+  opts.on("-d", "--debug", "Enable debug output") do
+    options[:debug] = true
+  end
 end.parse!
 
 source_instance = ARGV.shift
@@ -64,8 +69,8 @@ config = YAML.load_file("config.yml")
 source_config = config["instances"].fetch(source_instance, nil)
 target_config = config["instances"].fetch(target_instance, nil)
 
-source_client = MOCO::Client.new(subdomain: source_instance, api_key: source_config["api_key"])
-target_client = MOCO::Client.new(subdomain: target_instance, api_key: target_config["api_key"])
+source_client = MOCO::Client.new(subdomain: source_instance, api_key: source_config["api_key"], debug: options[:debug])
+target_client = MOCO::Client.new(subdomain: target_instance, api_key: target_config["api_key"], debug: options[:debug])
 
 syncer = MOCO::Sync.new(
   source_client,
@@ -76,7 +81,8 @@ syncer = MOCO::Sync.new(
     source: options.slice(:from, :to, :project_id, :company_id, :term),
     target: options.slice(:from, :to)
   },
-  dry_run: options[:dry_run]
+  dry_run: options[:dry_run],
+  debug: options[:debug]
 )
 
 syncer.source_projects.each do |project|

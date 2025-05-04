@@ -6,8 +6,8 @@ module MOCO
   class Client
     attr_reader :connection
 
-    def initialize(subdomain:, api_key:)
-      @connection = Connection.new(self, subdomain, api_key)
+    def initialize(subdomain:, api_key:, debug: false)
+      @connection = Connection.new(self, subdomain, api_key, debug: debug)
       @collections = {}
     end
 

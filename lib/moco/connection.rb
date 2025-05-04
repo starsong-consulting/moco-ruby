@@ -7,12 +7,13 @@ module MOCO
   # Handles HTTP communication with the MOCO API
   # Responsible for building API requests and converting responses to entity objects
   class Connection
-    attr_reader :client, :subdomain, :api_key
+    attr_reader :client, :subdomain, :api_key, :debug
 
-    def initialize(client, subdomain, api_key)
+    def initialize(client, subdomain, api_key, debug: false)
       @client = client
       @subdomain = subdomain
       @api_key = api_key
+      @debug = debug
       @conn = Faraday.new do |f|
         f.request :json
         f.response :json
@@ -25,6 +26,11 @@ module MOCO
     # These methods send the request and return the raw parsed JSON response body.
     %w[get post put patch delete].each do |http_method|
       define_method(http_method) do |path, params = {}|
+        # Log URL if debug is enabled
+        if @debug
+          full_url = @conn.build_url(path, params).to_s
+          warn "[DEBUG] Fetching URL: #{http_method.upcase} #{full_url}"
+        end
         response = @conn.send(http_method, path, params)
 
         # Raise an error for non-successful responses
