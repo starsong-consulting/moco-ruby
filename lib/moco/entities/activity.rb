@@ -89,8 +89,13 @@ module MOCO
                   end
     end
 
+    # Access the remote_id attribute
+    def remote_id
+      attributes[:remote_id]
+    end
+
     def to_s
-      "#{date} - #{hours}h - #{project&.name} - #{task&.name} - #{description}"
+      "#{attributes[:date]} - #{attributes[:hours]}h - #{project&.name} - #{task&.name} - #{attributes[:description]}"
     end
   end
 end
