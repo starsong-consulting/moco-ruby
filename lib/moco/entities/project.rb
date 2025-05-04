@@ -32,6 +32,10 @@ module MOCO
       end
     end
 
+    def to_s
+      "Project #{identifier} \"#{name}\" (#{id})"
+    end
+
     def active?
       status == "active"
     end

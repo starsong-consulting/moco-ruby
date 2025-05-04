@@ -29,6 +29,11 @@ module MOCO
       define_attribute_methods
     end
 
+    # Provides a basic string representation (can be overridden by subclasses).
+    def to_s
+      "#{self.class.name.split("::").last} ##{id}"
+    end
+
     # Returns the entity's ID.
     def id
       attributes[:id] || attributes["id"]
