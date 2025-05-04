@@ -54,6 +54,13 @@ module MOCO
       self
     end
 
+    # Modifies the base path to fetch assigned resources. Returns self.
+    def assigned
+      # Ensure this is only called once or handle idempotency if needed
+      @base_path += "/assigned"
+      self
+    end
+
     # --- Methods Triggering API Call ---
 
     # Fetches all records matching the current filters.
@@ -129,6 +136,9 @@ module MOCO
       query_params[:limit] = @limit_value if @limit_value
       # MOCO API might use 'per_page' instead of 'limit' for pagination control
       # Adjust if necessary based on API docs. Assuming 'limit' works for now.
+
+      # Filter out nil values before sending to avoid empty params like ?from&to=
+      query_params.compact!
 
       response = client.get(@base_path, query_params)
       @records = wrap_response(response) # wrap_response should return an Array here
