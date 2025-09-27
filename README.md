@@ -232,9 +232,35 @@ Usage: sync_activity.rb [options] source_subdomain target_subdomain
 
 ## Development
 
-After checking out the repo, run `bin/setup` to install dependencies. Then, run `rake test` to run the tests. You can also run `bin/console` for an interactive prompt that will allow you to experiment.
+After checking out the repo, run `bin/setup` to install dependencies.
 
-To install this gem onto your local machine, run `bundle exec rake install`. To release a new version, update the version number in `version.rb`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
+### Running Tests
+
+The gem includes a comprehensive test suite with both unit tests (mocked) and integration tests (live API):
+
+```bash
+# Run all tests
+ruby test/test_v2_api.rb              # Unit tests (mocked, fast)
+ruby test/test_comprehensive.rb       # Integration tests (requires .env)
+ruby test/test_holidays_expenses.rb   # Holidays & Expenses tests (requires .env)
+
+# Or run individually
+ruby test/test_v2_api.rb
+```
+
+For integration tests, create a `.env` file with your test instance credentials:
+```
+MOCO_API_TEST_SUBDOMAIN=your-test-subdomain
+MOCO_API_TEST_API_KEY=your-test-api-key
+```
+
+**Note:** The MOCO API has rate limits (120 requests per 2 minutes on standard plans). Integration tests make real API calls.
+
+### Installation
+
+To install this gem onto your local machine, run `bundle exec rake install`.
+
+To release a new version, update the version number in `version.rb`, update the `CHANGELOG.md`, and then run `bundle exec rake release`, which will create a git tag for the version, push git commits and the created tag, and push the `.gem` file to [rubygems.org](https://rubygems.org).
 
 ## Contributing
 

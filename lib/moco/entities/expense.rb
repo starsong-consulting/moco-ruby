@@ -4,6 +4,12 @@ module MOCO
   # Represents a MOCO expense
   # Provides methods for expense-specific operations and associations
   class Expense < BaseEntity
+    # Override entity_path to use the global expenses endpoint
+    # Note: Expenses can also be accessed via projects/{id}/expenses
+    def self.entity_path
+      "projects/expenses"
+    end
+
     # Class methods for bulk operations
     def self.disregard(client, expense_ids:)
       client.post("projects/expenses/disregard", { expense_ids: })
@@ -15,11 +21,13 @@ module MOCO
 
     # Associations
     def project
-      @project ||= client.projects.find(project_id) if project_id
+      # Use the association method which handles embedded objects
+      association(:project, "Project")
     end
 
     def user
-      @user ||= client.users.find(user_id) if user_id
+      # Use the association method which handles embedded objects
+      association(:user, "User")
     end
 
     def to_s

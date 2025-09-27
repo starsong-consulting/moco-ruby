@@ -1,7 +1,7 @@
 PATH
   remote: .
   specs:
-    moco-ruby (1.0.0.beta)
+    moco-ruby (1.0.0)
       activesupport (~> 7.0)
       faraday (~> 2.9.0)
       fuzzy_match (~> 2.1.0)
@@ -32,6 +32,7 @@ GEM
     crack (1.0.0)
       bigdecimal
       rexml
+    dotenv (2.8.1)
     drb (2.2.1)
     faraday (2.9.2)
       faraday-net_http (>= 2.0, < 3.2)
@@ -94,6 +95,7 @@ PLATFORMS
   arm64-darwin-23
 
 DEPENDENCIES
+  dotenv (~> 2.8)
   moco-ruby!
   rake (~> 13.0)
   rubocop (~> 1.21)

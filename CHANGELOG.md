@@ -2,6 +2,38 @@
 
 ## [Unreleased]
 
+## [1.0.0] - 2025-10-08
+
+### Fixed
+- Fixed Project `leader` and `co_leader` associations to return User objects instead of Hashes
+- Fixed Expense associations to use proper `association()` method for embedded objects
+- Fixed nested resource proxy caching issue - tasks and expenses now always return fresh data
+- Fixed `NestedCollectionProxy` path construction for expenses (was double-prefixing with "projects/")
+- Fixed `entity_path` warnings by converting instance methods to class methods in Holiday and WebHook classes
+- Fixed embedded entity conversion for leader, co_leader, and user associations in BaseEntity
+
+### Added
+- Added comprehensive test suite using test-unit framework:
+  - `test/test_comprehensive.rb` - 27 integration tests covering all CRUD operations
+  - `test/test_holidays_expenses.rb` - 9 tests for holidays and expenses (nested resources)
+  - `test/test_v2_api.rb` - 4 unit tests with mocked API responses
+  - `test/test_helper.rb` - Shared test configuration
+- Added `Project#expenses` method for nested expense access
+- Added proper entity type mappings for `:leader`, `:co_leader`, and `:user` in BaseEntity
+- Added dotenv gem as development dependency for test environment configuration
+
+### Changed
+- Moved all `require_relative` statements out of methods and into file-level requires
+- Improved load order in `lib/moco.rb` - core classes now load before entities
+- Updated `Expense` entity to use `association()` method for project and user relationships
+- Refactored nested resource access in Project class to return fresh proxies instead of cached ones
+- Enhanced `NestedCollectionProxy` to properly handle nested resource paths without double-prefixing
+
+### Removed
+- Removed manual test scripts (converted to proper test-unit tests)
+
+## [1.0.0.beta] - 2025-04-10
+
 ### Fixed
 - Fixed activity synchronization to properly identify existing activities in target system
 - Added remote_id accessor to Activity class to prevent duplicate activity creation
@@ -14,7 +46,7 @@
   - Supports proper path construction for nested API endpoints
   - Implements `destroy_all` method for bulk deletion of nested resources
 
-## [1.0.0] - 2025-04-10
+## [1.0.0.alpha-initial] - 2025-04-10
 
 ### Added
 - Implemented ActiveRecord-style query interface (`where`, `find`, `find_by`, `first`, `all`, `each`) via `CollectionProxy`.
@@ -93,9 +125,11 @@
 ## [0.1.0] - 2024-02-27
 - Initial release
 
-[Unreleased]: https://github.com/starsong-consulting/moco-ruby/compare/v1.0.0.alpha...HEAD
-[1.0.0.alpha]: https://github.com/starsong-consulting/moco-ruby/compare/v1.0.0...v1.0.0.alpha
-[1.0.0]: https://github.com/starsong-consulting/moco-ruby/compare/v0.1.2...v1.0.0
+[Unreleased]: https://github.com/starsong-consulting/moco-ruby/compare/v1.0.0...HEAD
+[1.0.0]: https://github.com/starsong-consulting/moco-ruby/compare/v1.0.0.beta...v1.0.0
+[1.0.0.beta]: https://github.com/starsong-consulting/moco-ruby/compare/v1.0.0.alpha...v1.0.0.beta
+[1.0.0.alpha]: https://github.com/starsong-consulting/moco-ruby/compare/v1.0.0.alpha-initial...v1.0.0.alpha
+[1.0.0.alpha-initial]: https://github.com/starsong-consulting/moco-ruby/compare/v0.1.2...v1.0.0.alpha-initial
 [0.1.2]: https://github.com/starsong-consulting/moco-ruby/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/starsong-consulting/moco-ruby/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/starsong-consulting/moco-ruby/releases/tag/v0.1.0

@@ -5,7 +5,7 @@ module MOCO
   # Provides methods for holiday-specific associations
   class Holiday < BaseEntity
     # Override entity_path to match API path
-    def entity_path
+    def self.entity_path
       "users/holidays"
     end
 

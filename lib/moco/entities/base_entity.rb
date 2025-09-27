@@ -190,9 +190,11 @@ module MOCO
       # Return cached collection if available
       return @_association_cache[association_name] if @_association_cache.key?(association_name)
 
-      # If the association data is already in attributes and is an array of entities, use it directly
+      # If the association data is already in attributes and is an array of entities
+      # AND this is NOT a nested resource, use it directly
+      # For nested resources, we always create a proxy to ensure CRUD operations work
       association_data = attributes[association_name]
-      if association_data.is_a?(Array) && association_data.all? { |item| item.is_a?(MOCO::BaseEntity) }
+      if !nested && association_data.is_a?(Array) && association_data.all? { |item| item.is_a?(MOCO::BaseEntity) }
         return @_association_cache[association_name] = association_data
       end
 
@@ -206,7 +208,6 @@ module MOCO
       # Check if this is a nested resource
       if nested
         # For nested resources, create a NestedCollectionProxy
-        require_relative "../nested_collection_proxy"
         @_association_cache[association_name] = MOCO::NestedCollectionProxy.new(
           client,
           self,
@@ -278,9 +279,12 @@ module MOCO
 
       # Infer type from the key_hint if :type attribute is missing
       if type_name.nil? && key_hint
-        # Special case: map :customer key to Company class
-        type_name = if key_hint == :customer
+        # Special cases: map certain keys to specific entity classes
+        type_name = case key_hint
+                    when :customer
                       "Company"
+                    when :leader, :co_leader, :user
+                      "User"
                     else
                       # General case: singularize the key hint (e.g., :tasks -> "task")
                       ActiveSupport::Inflector.singularize(key_hint.to_s)

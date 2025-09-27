@@ -12,9 +12,12 @@ module MOCO
     end
 
     # Override determine_base_path to include the parent's path
+    # For nested resources, we ignore any custom entity_path and just use simple pluralization
     def determine_base_path(path_or_entity_name)
       parent_type = ActiveSupport::Inflector.underscore(parent.class.name.split("::").last)
-      "#{parent_type.pluralize}/#{parent.id}/#{super}"
+      # Use simple tableized name, not entity_path (which might include 'projects/' prefix)
+      nested_path = ActiveSupport::Inflector.tableize(path_or_entity_name.to_s)
+      "#{parent_type.pluralize}/#{parent.id}/#{nested_path}"
     end
 
     # Create a new entity in this nested collection

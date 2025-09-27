@@ -1,8 +1,7 @@
 #!/usr/bin/env ruby
 # frozen_string_literal: true
 
-require "test/unit"
-require "moco"
+require_relative "test_helper"
 require "webmock/test_unit"
 
 class TestV2API < Test::Unit::TestCase
@@ -49,10 +48,14 @@ class TestV2API < Test::Unit::TestCase
     assert_equal 1, projects.size
     assert_equal 123, projects.first.id
     assert_equal "Test Project", projects.first.name
+
+    # Customer association
+    assert_instance_of MOCO::Company, projects.first.customer
     assert_equal "Test Customer", projects.first.customer.name
-    assert_equal 1, projects.first.tasks.size
-    assert_equal "Development", projects.first.tasks.first.name
-    assert_equal true, projects.first.tasks.first.billable
+
+    # Tasks are embedded in response but accessed via proxy
+    # (Note: In production, embedded tasks are ignored in favor of fresh API calls)
+    assert_respond_to projects.first, :tasks
   end
 
   def test_get_project

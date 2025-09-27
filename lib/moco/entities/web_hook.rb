@@ -5,7 +5,7 @@ module MOCO
   # Provides methods for webhook-specific operations
   class WebHook < BaseEntity
     # Override entity_path to match API path
-    def entity_path
+    def self.entity_path
       "account/web_hooks"
     end
 
