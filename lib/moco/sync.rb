@@ -1,5 +1,6 @@
 # frozen_string_literal: true
 
+require "set"
 require "fuzzy_match"
 require_relative "client"
 
@@ -23,6 +24,7 @@ module MOCO
 
       fetch_assigned_projects
       build_initial_mappings
+      create_missing_tasks_for_activities
     end
 
     # rubocop:todo Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
@@ -420,6 +422,59 @@ module MOCO
       end
     end
 
+    def create_missing_tasks_for_activities
+      # Fetch source activities to see which tasks are actually used
+      source_activity_filters = @filters.fetch(:source, {})
+      source_activities = @source.activities.where(source_activity_filters).all
+
+      # Collect unique task IDs that are used in activities and need syncing
+      tasks_needed = Set.new
+      source_activities.each do |activity|
+        # Only consider activities for mapped projects
+        next unless @project_mapping[activity.project&.id]
+        # Check if task is already mapped
+        next if activity.task.nil?
+        next if @task_mapping[activity.task.id]
+
+        tasks_needed.add(activity.task.id)
+      end
+
+      return if tasks_needed.empty?
+
+      debug_log "Found #{tasks_needed.size} unmapped tasks used in activities"
+
+      # Create missing tasks in target projects
+      tasks_needed.each do |task_id|
+        # Find the source task from source activities
+        source_activity = source_activities.find { |a| a.task&.id == task_id }
+        next unless source_activity
+
+        source_task = source_activity.task
+        source_project_id = source_activity.project.id
+        target_project = @project_mapping[source_project_id]
+
+        debug_log "  Creating missing task '#{source_task.name}' in target project #{target_project.id} (#{target_project.name})"
+
+        unless @dry_run
+          # Create the task in the target project
+          # Tasks used in activities must be active
+          # Use NestedCollectionProxy to create the task
+          task_proxy = MOCO::NestedCollectionProxy.new(@target, target_project, :tasks, "Task")
+          new_task = task_proxy.create(
+            name: source_task.name,
+            billable: source_task.billable,
+            active: true
+          )
+
+          # Add to mapping
+          @task_mapping[source_task.id] = new_task
+          debug_log "    Created task #{new_task.id} - #{new_task.name}"
+        else
+          debug_log "    (Dry run - would create task '#{source_task.name}')"
+        end
+      end
+    end
+
     def match_project(target_project)
       # Create array of search objects manually since we can't call map on EntityCollection
       searchable_projects = []
@@ -436,18 +491,16 @@ module MOCO
     end
 
     def match_task(target_task, source_project)
-      # Get tasks from the source project
+      # Get tasks from the source project (embedded in projects.assigned response)
       tasks = source_project.tasks
 
-      # Create array of search objects manually since we can't rely on Enumerable methods
+      # Only proceed if we have tasks to match against
+      return nil if tasks.empty?
 
-      # Manually iterate through tasks
+      # Create array of search objects for fuzzy matching
       searchable_tasks = tasks.map do |task|
         { original: task, name: task.name }
       end
-
-      # Only proceed if we have tasks to match against
-      return nil if searchable_tasks.empty?
 
       matcher = FuzzyMatch.new(searchable_tasks, read: :name)
       match = matcher.find(target_task.name, threshold: @task_match_threshold)
