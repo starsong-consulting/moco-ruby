@@ -11,7 +11,8 @@ options = {
   project: nil,
   match_project_threshold: 0.8,
   match_task_threshold: 0.45,
-  debug: false
+  debug: false,
+  default_task: nil
 }
 
 OptionParser.new do |opts|
@@ -52,6 +53,10 @@ OptionParser.new do |opts|
   opts.on("-d", "--debug", "Enable debug output") do
     options[:debug] = true
   end
+
+  opts.on("--default-task TASK_NAME", "Default task name to map unmatched tasks to (avoids creating new tasks)") do |task_name|
+    options[:default_task] = task_name
+  end
 end.parse!
 
 source_instance = ARGV.shift
@@ -82,7 +87,8 @@ syncer = MOCO::Sync.new(
     target: options.slice(:from, :to)
   },
   dry_run: options[:dry_run],
-  debug: options[:debug]
+  debug: options[:debug],
+  default_task_name: options[:default_task]
 )
 
 syncer.source_projects.each do |project|

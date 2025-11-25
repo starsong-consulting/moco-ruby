@@ -18,9 +18,11 @@ module MOCO
       @filters = args.fetch(:filters, {})
       @dry_run = args.fetch(:dry_run, false)
       @debug = args.fetch(:debug, false)
+      @default_task_name = args.fetch(:default_task_name, nil)
 
       @project_mapping = {}
       @task_mapping = {}
+      @default_task_cache = {} # Cache default tasks per project
 
       fetch_assigned_projects
       build_initial_mappings
@@ -443,6 +445,10 @@ module MOCO
 
       debug_log "Found #{tasks_needed.size} unmapped tasks used in activities"
 
+      # Track tasks that couldn't be created due to permission errors
+      @failed_task_creations ||= []
+      @mapped_to_default ||= []
+
       # Create missing tasks in target projects
       tasks_needed.each do |task_id|
         # Find the source task from source activities
@@ -453,26 +459,73 @@ module MOCO
         source_project_id = source_activity.project.id
         target_project = @project_mapping[source_project_id]
 
+        # If default task name is provided, try to map to it instead of creating
+        if @default_task_name
+          default_task = find_default_task(target_project)
+          if default_task
+            @task_mapping[source_task.id] = default_task
+            debug_log "  Mapped task '#{source_task.name}' -> default task '#{default_task.name}' (#{default_task.id})"
+            @mapped_to_default << {
+              task_name: source_task.name,
+              project_name: target_project.name,
+              default_task_name: default_task.name
+            }
+            next
+          else
+            warn "  WARNING: Default task '#{@default_task_name}' not found in target project '#{target_project.name}'"
+            warn "           Will attempt to create task '#{source_task.name}' instead"
+          end
+        end
+
         debug_log "  Creating missing task '#{source_task.name}' in target project #{target_project.id} (#{target_project.name})"
 
         unless @dry_run
-          # Create the task in the target project
-          # Tasks used in activities must be active
-          # Use NestedCollectionProxy to create the task
-          task_proxy = MOCO::NestedCollectionProxy.new(@target, target_project, :tasks, "Task")
-          new_task = task_proxy.create(
-            name: source_task.name,
-            billable: source_task.billable,
-            active: true
-          )
+          begin
+            # Create the task in the target project
+            # Tasks used in activities must be active
+            # Use NestedCollectionProxy to create the task
+            task_proxy = MOCO::NestedCollectionProxy.new(@target, target_project, :tasks, "Task")
+            new_task = task_proxy.create(
+              name: source_task.name,
+              billable: source_task.billable,
+              active: true
+            )
 
-          # Add to mapping
-          @task_mapping[source_task.id] = new_task
-          debug_log "    Created task #{new_task.id} - #{new_task.name}"
+            # Add to mapping
+            @task_mapping[source_task.id] = new_task
+            debug_log "    Created task #{new_task.id} - #{new_task.name}"
+          rescue StandardError => e
+            # Check if this is a permission error
+            if e.message =~ /403|Forbidden|401|Unauthorized|not authorized|permission/i
+              warn "  WARNING: Cannot create task '#{source_task.name}' in target project - insufficient permissions"
+              warn "           Activities using this task will be skipped during sync"
+              @failed_task_creations << {
+                task_name: source_task.name,
+                project_name: target_project.name,
+                project_id: target_project.id
+              }
+            else
+              # Re-raise other errors
+              raise
+            end
+          end
         else
           debug_log "    (Dry run - would create task '#{source_task.name}')"
         end
       end
+    end
+
+    def find_default_task(target_project)
+      # Return cached result if available
+      return @default_task_cache[target_project.id] if @default_task_cache.key?(target_project.id)
+
+      # Search for the default task in the target project
+      default_task = target_project.tasks.find { |task| task.name == @default_task_name }
+
+      # Cache the result (even if nil)
+      @default_task_cache[target_project.id] = default_task
+
+      default_task
     end
 
     def match_project(target_project)

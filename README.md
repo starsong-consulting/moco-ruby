@@ -226,9 +226,19 @@ Usage: sync_activity.rb [options] source_subdomain target_subdomain
         --match-project-threshold VALUE
                                      Fuzzy match threshold for projects (0.0 - 1.0), default 0.8
         --match-task-threshold VALUE Fuzzy match threshold for tasks (0.0 - 1.0), default 0.45
+        --default-task TASK_NAME     Map unmatched tasks to this default task instead of creating new tasks
+    -d, --debug                      Enable debug output
     -h, --help                       Show this message
 ```
 **Example:** `sync_activity.rb --from 2024-04-01 --to 2024-04-10 --dry-run source-instance target-instance`
+
+**Using Default Task Mapping:** If your target account has limited permissions and cannot create tasks, or if you want to consolidate multiple source tasks into a single target task, use the `--default-task` flag:
+
+```bash
+sync_activity.rb --from 2024-04-01 --to 2024-04-10 --default-task "Other" source-instance target-instance
+```
+
+This will map any unmatched source tasks to a task named "Other" in the corresponding target project, avoiding the need to create new tasks.
 
 ## Development
 
