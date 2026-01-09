@@ -1,9 +1,9 @@
 PATH
   remote: .
   specs:
-    moco-ruby (1.0.0)
-      activesupport (~> 7.0)
-      faraday (~> 2.9.0)
+    moco-ruby (1.1.0)
+      activesupport (>= 7.0)
+      faraday (>= 2.0)
       fuzzy_match (~> 2.1.0)
 
 GEM
@@ -93,6 +93,7 @@ GEM
 PLATFORMS
   arm64-darwin-22
   arm64-darwin-23
+  x86_64-linux
 
 DEPENDENCIES
   dotenv (~> 2.8)
