@@ -8,7 +8,9 @@ Gem::Specification.new do |spec|
   spec.authors = ["Teal Bauer"]
   spec.email = ["rubygems@teal.is"]
 
-  spec.summary = "A Ruby Gem to interact with the MOCO (mocoapp.com) API."
+  spec.summary = "A Ruby Gem to interact with the MOCO API."
+  spec.description = "A modern, Ruby-esque interface for the MOCO API (mocoapp.com). " \
+                     "Provides an ActiveRecord-style interface for projects, activities, users, companies, and more."
   spec.homepage = "https://github.com/starsong-consulting/moco-ruby"
   spec.required_ruby_version = ">= 3.2.0"
   spec.license = "Apache-2.0"
