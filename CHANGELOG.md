@@ -2,6 +2,39 @@
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-01-14
+
+### Added
+- Complete MOCO API coverage with 48+ entity types
+- New entities: Offer, Contact, Tagging, DealCategory, CatalogService, CustomProperty,
+  ExpenseTemplate, FixedCost, HourlyRate, InternalHourlyRate, TaskTemplate, UserRole,
+  VatCodeSale, VatCodePurchase, Profile, WorkTimeAdjustment, ProjectContract,
+  PaymentSchedule, RecurringExpense, InvoicePayment, InvoiceReminder, OfferApproval,
+  PurchaseCategory, PurchaseDraft, ProjectGroup, InvoiceBookkeepingExport,
+  PurchaseBookkeepingExport, PurchaseBudget, PurchasePayment
+- Inline attribute documentation for all entity classes
+- Reports API support via `moco.reports.absences`, `.cashflow`, `.finance`, `.utilization`
+- Integration tests for all entity types
+- GitHub Actions CI for tests and auto-release
+- Ruby 4.0 support
+
+### Fixed
+- Debug output now correctly shows request body for POST/PUT/PATCH requests
+
+## [1.1.0] - 2025-11-15
+
+### Added
+- Support for limited-permission accounts with auto-create missing tasks
+- `--default-task` flag for limited-permission accounts
+- `copy_project` tool for copying projects between MOCO instances
+
+### Fixed
+- Enable auto-require for Bundler
+- Loosen dependency constraints for Rails 8 compatibility
+
+### Security
+- Update rexml to 3.4.4 to fix CVE-2025-58767
+
 ## [1.0.0] - 2025-10-08
 
 ### Fixed
@@ -125,7 +158,9 @@
 ## [0.1.0] - 2024-02-27
 - Initial release
 
-[Unreleased]: https://github.com/starsong-consulting/moco-ruby/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/starsong-consulting/moco-ruby/compare/v1.2.0...HEAD
+[1.2.0]: https://github.com/starsong-consulting/moco-ruby/compare/v1.1.0...v1.2.0
+[1.1.0]: https://github.com/starsong-consulting/moco-ruby/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/starsong-consulting/moco-ruby/compare/v1.0.0.beta...v1.0.0
 [1.0.0.beta]: https://github.com/starsong-consulting/moco-ruby/compare/v1.0.0.alpha...v1.0.0.beta
 [1.0.0.alpha]: https://github.com/starsong-consulting/moco-ruby/compare/v1.0.0.alpha-initial...v1.0.0.alpha
