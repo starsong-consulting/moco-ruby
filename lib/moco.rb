@@ -62,9 +62,13 @@ require_relative "moco/entities/payment_schedule"
 require_relative "moco/entities/recurring_expense"
 require_relative "moco/entities/invoice_payment"
 require_relative "moco/entities/invoice_reminder"
+require_relative "moco/entities/invoice_bookkeeping_export"
 require_relative "moco/entities/offer_approval"
 require_relative "moco/entities/purchase_category"
 require_relative "moco/entities/purchase_draft"
+require_relative "moco/entities/purchase_payment"
+require_relative "moco/entities/purchase_budget"
+require_relative "moco/entities/purchase_bookkeeping_export"
 
 # Reports
 require_relative "moco/entities/reports/absences"

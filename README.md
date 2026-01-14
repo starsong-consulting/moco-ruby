@@ -206,7 +206,10 @@ The gem supports all MOCO API entities with a Ruby-esque interface:
 `CatalogService`, `CustomProperty`, `ExpenseTemplate`, `FixedCost`, `HourlyRate`, `InternalHourlyRate`, `TaskTemplate`, `UserRole`
 
 **Financial:**
-`VatCodeSale`, `VatCodePurchase`, `PurchaseCategory`, `PurchaseDraft`
+`VatCodeSale`, `VatCodePurchase`, `PurchaseCategory`, `PurchaseDraft`, `PurchaseBudget`, `PurchasePayment`
+
+**Bookkeeping:**
+`InvoiceBookkeepingExport`, `PurchaseBookkeepingExport`
 
 **Nested Resources:**
 `Employment`, `WorkTimeAdjustment`, `ProjectContract`, `PaymentSchedule`, `RecurringExpense`, `InvoicePayment`, `InvoiceReminder`, `OfferApproval`

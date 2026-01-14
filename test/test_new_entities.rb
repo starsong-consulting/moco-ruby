@@ -676,4 +676,104 @@ class TestNewEntities < Test::Unit::TestCase
     result = @client.reports.finance(from: "2024-01-01", to: "2024-01-31")
     assert_kind_of Array, result
   end
+
+  # Test InvoiceBookkeepingExport entity
+  def test_get_invoice_bookkeeping_exports
+    stub_request(:get, "https://example.mocoapp.com/api/v1/invoices/bookkeeping_exports")
+      .to_return(
+        status: 200,
+        body: [{ id: 1, from: "2024-01-01", to: "2024-12-31", invoice_ids: [123, 456] }].to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    exports = @client.invoice_bookkeeping_exports.all
+    assert_equal 1, exports.size
+    assert_instance_of MOCO::InvoiceBookkeepingExport, exports.first
+  end
+
+  def test_create_invoice_bookkeeping_export
+    stub_request(:post, "https://example.mocoapp.com/api/v1/invoices/bookkeeping_exports")
+      .to_return(
+        status: 201,
+        body: { id: 1, from: "2024-01-01", to: "2024-12-31", invoice_ids: [123, 456] }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    export = @client.invoice_bookkeeping_exports.create(invoice_ids: [123, 456])
+    assert_equal 1, export.id
+  end
+
+  # Test PurchaseBookkeepingExport entity
+  def test_get_purchase_bookkeeping_exports
+    stub_request(:get, "https://example.mocoapp.com/api/v1/purchases/bookkeeping_exports")
+      .to_return(
+        status: 200,
+        body: [{ id: 1, from: "2024-01-01", to: "2024-12-31", purchase_ids: [789, 101] }].to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    exports = @client.purchase_bookkeeping_exports.all
+    assert_equal 1, exports.size
+    assert_instance_of MOCO::PurchaseBookkeepingExport, exports.first
+  end
+
+  def test_create_purchase_bookkeeping_export
+    stub_request(:post, "https://example.mocoapp.com/api/v1/purchases/bookkeeping_exports")
+      .to_return(
+        status: 201,
+        body: { id: 1, from: "2024-01-01", to: "2024-12-31", purchase_ids: [789, 101] }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    export = @client.purchase_bookkeeping_exports.create(purchase_ids: [789, 101])
+    assert_equal 1, export.id
+  end
+
+  # Test PurchaseBudget entity (read-only)
+  def test_get_purchase_budgets
+    stub_request(:get, "https://example.mocoapp.com/api/v1/purchases/budgets")
+      .to_return(
+        status: 200,
+        body: [{ id: 1, year: 2024, title: "Office Supplies", target: 10000, exhaused: 5000, remaining: 5000 }].to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    budgets = @client.purchase_budgets.all
+    assert_equal 1, budgets.size
+    assert_instance_of MOCO::PurchaseBudget, budgets.first
+    assert_equal 50.0, budgets.first.remaining_percentage
+  end
+
+  # Test PurchasePayment entity
+  def test_get_purchase_payments
+    stub_request(:get, "https://example.mocoapp.com/api/v1/purchases/payments")
+      .to_return(
+        status: 200,
+        body: [{ id: 1, date: "2024-01-15", total: "1999.00", purchase: { id: 123, identifier: "E2401-001" } }].to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    payments = @client.purchase_payments.all
+    assert_equal 1, payments.size
+    assert_instance_of MOCO::PurchasePayment, payments.first
+  end
+
+  def test_create_purchase_payment
+    stub_request(:post, "https://example.mocoapp.com/api/v1/purchases/payments")
+      .to_return(
+        status: 201,
+        body: { id: 1, date: "2024-01-15", total: "1000.00", purchase_id: 123 }.to_json,
+        headers: { "Content-Type" => "application/json" }
+      )
+
+    payment = @client.purchase_payments.create(date: "2024-01-15", total: 1000, purchase_id: 123)
+    assert_equal 1, payment.id
+  end
+
+  def test_dynamic_collection_access_bookkeeping_entities
+    assert_respond_to @client, :invoice_bookkeeping_exports
+    assert_respond_to @client, :purchase_bookkeeping_exports
+    assert_respond_to @client, :purchase_budgets
+    assert_respond_to @client, :purchase_payments
+  end
 end
