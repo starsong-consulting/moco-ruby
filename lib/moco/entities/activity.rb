@@ -2,7 +2,37 @@
 
 module MOCO
   # Represents a MOCO activity (time entry)
-  # Provides methods for activity-specific operations and associations
+  #
+  # == Required attributes for create:
+  #   date        - String, "YYYY-MM-DD" format (e.g., "2024-01-15")
+  #   project_id  - Integer, ID of the project
+  #   task_id     - Integer, ID of the task within the project
+  #
+  # == Optional attributes:
+  #   seconds     - Integer, duration in seconds (3600 = 1 hour)
+  #   hours       - Float, duration in hours (alternative to seconds)
+  #   description - String, description of the work done
+  #   billable    - Boolean, whether the activity is billable (default: true or project setting)
+  #   tag         - String, any tag (e.g., "RMT-123")
+  #   remote_service - String, external service name. Allowed: "trello", "jira", "asana",
+  #                    "basecamp", "wunderlist", "basecamp2", "basecamp3", "toggl", "mite",
+  #                    "github", "youtrack"
+  #   remote_id   - String, ID in the external service (e.g., "PRJ-2342")
+  #   remote_url  - String, URL to the external ticket/issue
+  #
+  # == Read-only attributes (returned by API):
+  #   id, billed, invoice_id, project (Hash), task (Hash), customer (Hash),
+  #   user (Hash), hourly_rate, timer_started_at, created_at, updated_at
+  #
+  # == Example:
+  #   moco.activities.create(
+  #     date: "2024-01-15",
+  #     project_id: 123456,
+  #     task_id: 234567,
+  #     seconds: 3600,
+  #     description: "Implemented feature X"
+  #   )
+  #
   class Activity < BaseEntity
     # Instance methods for activity-specific operations
     def start_timer
