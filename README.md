@@ -167,25 +167,51 @@ puts "Billable tasks: #{billable_tasks.map(&:name).join(', ')}"
 dev_task = project.tasks.find_by(name: "Development")
 ```
 
+### Profile
+
+Access the current user's profile:
+
+```ruby
+profile = moco.profile
+puts "Logged in as: #{profile.firstname} #{profile.lastname}"
+```
+
+### Reports
+
+Access read-only report endpoints:
+
+```ruby
+# Absences report
+absences = moco.reports.absences(year: 2024)
+
+# Utilization report (requires date range)
+utilization = moco.reports.utilization(from: "2024-01-01", to: "2024-12-31")
+
+# Financial reports
+cashflow = moco.reports.cashflow(from: "2024-01-01", to: "2024-03-31")
+finance = moco.reports.finance(from: "2024-01-01", to: "2024-03-31")
+```
+
 ### Supported Entities
 
 The gem supports all MOCO API entities with a Ruby-esque interface:
 
-- `Project`
-- `Activity`
-- `User`
-- `Company`
-- `Task`
-- `Invoice`
-- `Deal`
-- `Expense`
-- `WebHook`
-- `Schedule`
-- `Presence`
-- `Holiday`
-- `PlanningEntry`
+**Core:**
+`Project`, `Activity`, `User`, `Company`, `Task`, `Invoice`, `Deal`, `Expense`, `WebHook`, `Schedule`, `Presence`, `Holiday`, `PlanningEntry`
 
-Access them via the moco using their plural, snake_case names (e.g., `moco.planning_entries`).
+**Business:**
+`Contact`, `Offer`, `Purchase`, `Receipt`, `Comment`, `Tag`, `Tagging`, `DealCategory`, `ProjectGroup`, `Unit`
+
+**Account Settings:**
+`CatalogService`, `CustomProperty`, `ExpenseTemplate`, `FixedCost`, `HourlyRate`, `InternalHourlyRate`, `TaskTemplate`, `UserRole`
+
+**Financial:**
+`VatCodeSale`, `VatCodePurchase`, `PurchaseCategory`, `PurchaseDraft`
+
+**Nested Resources:**
+`Employment`, `WorkTimeAdjustment`, `ProjectContract`, `PaymentSchedule`, `RecurringExpense`, `InvoicePayment`, `InvoiceReminder`, `OfferApproval`
+
+Access them via the client using their plural, snake_case names (e.g., `moco.planning_entries`, `moco.vat_code_sales`).
 
 ## Utilities
 
@@ -246,16 +272,16 @@ After checking out the repo, run `bin/setup` to install dependencies.
 
 ### Running Tests
 
-The gem includes a comprehensive test suite with both unit tests (mocked) and integration tests (live API):
+The gem includes unit tests (mocked) and integration tests (live API):
 
 ```bash
-# Run all tests
-ruby test/test_v2_api.rb              # Unit tests (mocked, fast)
-ruby test/test_comprehensive.rb       # Integration tests (requires .env)
-ruby test/test_holidays_expenses.rb   # Holidays & Expenses tests (requires .env)
+# Unit tests (mocked, fast)
+bundle exec ruby -Ilib -Itest test/test_v2_api.rb
+bundle exec ruby -Ilib -Itest test/test_new_entities.rb
 
-# Or run individually
-ruby test/test_v2_api.rb
+# Integration tests (requires .env credentials)
+bundle exec ruby -Ilib -Itest test/test_integration.rb
+bundle exec ruby -Ilib -Itest test/test_comprehensive.rb
 ```
 
 For integration tests, create a `.env` file with your test instance credentials:
@@ -264,7 +290,7 @@ MOCO_API_TEST_SUBDOMAIN=your-test-subdomain
 MOCO_API_TEST_API_KEY=your-test-api-key
 ```
 
-**Note:** The MOCO API has rate limits (120 requests per 2 minutes on standard plans). Integration tests make real API calls.
+**Note:** The MOCO API has rate limits. The gem automatically retries rate-limited requests with exponential backoff.
 
 ### Installation
 

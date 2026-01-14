@@ -37,6 +37,33 @@ module MOCO
       self
     end
 
+    # Get attachments for this invoice
+    def attachments
+      client.get("invoices/#{id}/attachments")
+    end
+
+    # Add an attachment to the invoice
+    def add_attachment(file_data)
+      client.post("invoices/#{id}/attachments", file_data)
+      self
+    end
+
+    # Delete an attachment from the invoice
+    def delete_attachment(attachment_id)
+      client.delete("invoices/#{id}/attachments/#{attachment_id}")
+      self
+    end
+
+    # Fetches payments for this invoice
+    def payments
+      MOCO::NestedCollectionProxy.new(client, self, :payments, "InvoicePayment")
+    end
+
+    # Fetches reminders for this invoice
+    def reminders
+      MOCO::NestedCollectionProxy.new(client, self, :reminders, "InvoiceReminder")
+    end
+
     # Associations
     def company
       association(:customer, "Company")

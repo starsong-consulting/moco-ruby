@@ -37,11 +37,69 @@ module MOCO
       name.to_s == ActiveSupport::Inflector.pluralize(name.to_s)
     end
 
+    # Get the current user's profile (singleton resource)
+    def profile
+      Profile.new(self, get("profile"))
+    end
+
+    # Reports namespace for read-only report endpoints
+    def reports
+      @reports ||= ReportsProxy.new(self)
+    end
+
     # Delegate HTTP methods to connection
     %i[get post put patch delete].each do |method|
       define_method(method) do |path, params = {}|
         connection.send(method, path, params)
       end
+    end
+  end
+
+  # Proxy for accessing report endpoints
+  class ReportsProxy
+    def initialize(client)
+      @client = client
+    end
+
+    # Get absences report
+    # @param year [Integer] optional year filter
+    # @param active [Boolean] optional active status filter
+    def absences(year: nil, active: nil)
+      params = {}
+      params[:year] = year if year
+      params[:active] = active unless active.nil?
+      @client.get("report/absences", params)
+    end
+
+    # Get cashflow report
+    # @param from [String] start date (YYYY-MM-DD)
+    # @param to [String] end date (YYYY-MM-DD)
+    # @param term [String] optional search term
+    def cashflow(from: nil, to: nil, term: nil)
+      params = {}
+      params[:from] = from if from
+      params[:to] = to if to
+      params[:term] = term if term
+      @client.get("report/cashflow", params)
+    end
+
+    # Get finance report
+    # @param from [String] start date (YYYY-MM-DD)
+    # @param to [String] end date (YYYY-MM-DD)
+    # @param term [String] optional search term
+    def finance(from: nil, to: nil, term: nil)
+      params = {}
+      params[:from] = from if from
+      params[:to] = to if to
+      params[:term] = term if term
+      @client.get("report/finance", params)
+    end
+
+    # Get utilization report
+    # @param from [String] start date (YYYY-MM-DD) - required
+    # @param to [String] end date (YYYY-MM-DD) - required
+    def utilization(from:, to:)
+      @client.get("report/utilization", { from:, to: })
     end
   end
 end

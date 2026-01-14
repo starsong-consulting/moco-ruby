@@ -22,6 +22,18 @@ module MOCO
       has_many(:holidays)
     end
 
+    def employments
+      has_many(:employments)
+    end
+
+    def work_time_adjustments
+      has_many(:work_time_adjustments)
+    end
+
+    def unit
+      association(:unit)
+    end
+
     def full_name
       "#{firstname} #{lastname}"
     end

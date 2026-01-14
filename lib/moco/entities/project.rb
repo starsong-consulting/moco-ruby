@@ -31,18 +31,32 @@ module MOCO
     end
 
     # Fetches tasks associated with this project.
+    # Always returns a NestedCollectionProxy for consistent interface.
+    # Data is fetched lazily when accessed (e.g., .all, .first, .each).
+    # Note: Embedded tasks from projects.assigned are available via attributes[:tasks]
+    # but may have incomplete fields compared to the dedicated endpoint.
     def tasks
-      # If tasks are already embedded in the attributes (e.g., from projects.assigned),
-      # return them directly instead of making a new API call
-      embedded_tasks = attributes[:tasks]
-      if embedded_tasks.is_a?(Array) && embedded_tasks.all? { |t| t.is_a?(MOCO::Task) }
-        return embedded_tasks
-      end
-
-      # Otherwise, create a proxy for fetching tasks via API
-      # Don't cache the proxy - create a fresh one each time
-      # This ensures we get fresh data when tasks are created/updated/deleted
       MOCO::NestedCollectionProxy.new(client, self, :tasks, "Task")
+    end
+
+    # Fetches contracts associated with this project.
+    def contracts
+      MOCO::NestedCollectionProxy.new(client, self, :contracts, "ProjectContract")
+    end
+
+    # Fetches payment schedules associated with this project.
+    def payment_schedules
+      MOCO::NestedCollectionProxy.new(client, self, :payment_schedules, "PaymentSchedule")
+    end
+
+    # Fetches recurring expenses associated with this project.
+    def recurring_expenses
+      MOCO::NestedCollectionProxy.new(client, self, :recurring_expenses, "RecurringExpense")
+    end
+
+    # Get the project group
+    def project_group
+      association(:project_group)
     end
 
     def to_s
