@@ -35,11 +35,19 @@ module MOCO
 
         loop do
           begin
-            # Log URL if debug is enabled
+            # Log request if debug is enabled
             if @debug
-              full_url = @conn.build_url(path, params).to_s
-              warn "[DEBUG] Fetching URL: #{http_method.upcase} #{full_url}"
+              if %w[post put patch].include?(http_method)
+                # For body methods, show the JSON that will be sent
+                warn "[DEBUG] #{http_method.upcase} #{@conn.url_prefix}/#{path}"
+                warn "[DEBUG] Body: #{params.to_json}" unless params.empty?
+              else
+                # For query methods, show the full URL with params
+                full_url = @conn.build_url(path, params).to_s
+                warn "[DEBUG] #{http_method.upcase} #{full_url}"
+              end
             end
+
             response = @conn.send(http_method, path, params)
 
             # Handle rate limiting with automatic retry
