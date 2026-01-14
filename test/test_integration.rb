@@ -296,4 +296,31 @@ class TestIntegration < Test::Unit::TestCase
     assert_kind_of Array, hooks
     assert hooks.all? { |h| h.is_a?(MOCO::WebHook) }
   end
+
+  # Bookkeeping exports
+  def test_invoice_bookkeeping_exports
+    exports = @client.invoice_bookkeeping_exports.all
+    assert_kind_of Array, exports
+    assert exports.all? { |e| e.is_a?(MOCO::InvoiceBookkeepingExport) }
+  end
+
+  def test_purchase_bookkeeping_exports
+    exports = @client.purchase_bookkeeping_exports.all
+    assert_kind_of Array, exports
+    assert exports.all? { |e| e.is_a?(MOCO::PurchaseBookkeepingExport) }
+  end
+
+  # Purchase budgets (read-only)
+  def test_purchase_budgets
+    budgets = @client.purchase_budgets.all
+    assert_kind_of Array, budgets
+    assert budgets.all? { |b| b.is_a?(MOCO::PurchaseBudget) }
+  end
+
+  # Purchase payments
+  def test_purchase_payments
+    payments = @client.purchase_payments.all
+    assert_kind_of Array, payments
+    assert payments.all? { |p| p.is_a?(MOCO::PurchasePayment) }
+  end
 end
