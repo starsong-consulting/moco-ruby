@@ -94,7 +94,7 @@ syncer = MOCO::Sync.new(
 syncer.source_projects.each do |project|
   if syncer.project_mapping[project.id]
     puts "✅ Project #{project} --> #{syncer.project_mapping[project.id]}"
-    project.tasks.each do |task|
+    project.embedded_tasks.each do |task|
       if syncer.task_mapping[task.id]
         puts "  ✅ Task #{task} --> #{syncer.task_mapping[task.id]}"
       else

@@ -82,13 +82,22 @@ module MOCO
       MOCO::NestedCollectionProxy.new(client, self, :expenses, "Expense")
     end
 
-    # Fetches tasks associated with this project.
-    # Always returns a NestedCollectionProxy for consistent interface.
-    # Data is fetched lazily when accessed (e.g., .all, .first, .each).
-    # Note: Embedded tasks from projects.assigned are available via attributes[:tasks]
-    # but may have incomplete fields compared to the dedicated endpoint.
+    # Fetches tasks associated with this project via the API.
+    # Returns a NestedCollectionProxy for lazy loading and CRUD operations.
     def tasks
       MOCO::NestedCollectionProxy.new(client, self, :tasks, "Task")
+    end
+
+    # Returns embedded tasks from the projects/assigned response, or nil.
+    # These have fewer fields than the full API response but avoid an
+    # extra API call, useful for limited-permission accounts.
+    def embedded_tasks
+      embedded = attributes[:tasks]
+      if embedded.is_a?(Array) && embedded.all? { |t| t.is_a?(MOCO::Task) }
+        embedded
+      else
+        []
+      end
     end
 
     # Fetches contracts associated with this project.

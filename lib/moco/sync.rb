@@ -364,7 +364,7 @@ module MOCO
     # rubocop:enable Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/MethodLength
 
     def fetch_assigned_projects
-      # Use .projects.assigned for the source, standard .projects for the target
+      # Use .projects.assigned for both source and target to get embedded tasks
       source_filters = @filters.fetch(:source, {}).merge(active: "true")
       # Get the proxy, then fetch all results into the instance variable
       @source_projects = @source.projects.assigned.where(source_filters).all
@@ -372,19 +372,19 @@ module MOCO
       @source_projects.each do |project|
         debug_log "  Source Project: #{project.id} - #{project.name} (#{project.identifier})"
         debug_log "    Tasks:"
-        project.tasks.each do |task|
+        project.embedded_tasks.each do |task|
           debug_log "      Task: #{task.id} - #{task.name}"
         end
       end
 
       target_filters = @filters.fetch(:target, {}).merge(active: "true")
       # Get the proxy, then fetch all results into the instance variable
-      @target_projects = @target.projects.where(target_filters).all
+      @target_projects = @target.projects.assigned.where(target_filters).all
       debug_log "Found #{@target_projects.size} target projects:"
       @target_projects.each do |project|
         debug_log "  Target Project: #{project.id} - #{project.name} (#{project.identifier})"
         debug_log "    Tasks:"
-        project.tasks.each do |task|
+        project.embedded_tasks.each do |task|
           debug_log "      Task: #{task.id} - #{task.name}"
         end
       end
@@ -401,7 +401,7 @@ module MOCO
         @project_mapping[source_project.id] = target_project
         debug_log "Mapped source project #{source_project.id} (#{source_project.name}) to target project #{target_project.id} (#{target_project.name})"
 
-        target_project.tasks.each do |target_task|
+        target_project.embedded_tasks.each do |target_task|
           source_task = match_task(target_task, source_project)
           if source_task
             @task_mapping[source_task.id] = target_task
@@ -520,7 +520,7 @@ module MOCO
       return @default_task_cache[target_project.id] if @default_task_cache.key?(target_project.id)
 
       # Search for the default task in the target project
-      default_task = target_project.tasks.find { |task| task.name == @default_task_name }
+      default_task = target_project.embedded_tasks.find { |task| task.name == @default_task_name }
 
       # Cache the result (even if nil)
       @default_task_cache[target_project.id] = default_task
@@ -545,7 +545,7 @@ module MOCO
 
     def match_task(target_task, source_project)
       # Get tasks from the source project (embedded in projects.assigned response)
-      tasks = source_project.tasks
+      tasks = source_project.embedded_tasks
 
       # Only proceed if we have tasks to match against
       return nil if tasks.empty?
