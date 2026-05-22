@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-05-23
+
 ### Added
 - New entities to cover remaining MOCO API v1 resources: `LetterPaper`
   (read-only letterhead listing), `InvoiceAttachment`, `OfferAttachment`,
