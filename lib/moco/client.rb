@@ -42,6 +42,13 @@ module MOCO
       Profile.new(self, get("profile"))
     end
 
+    # Session helper for verifying the configured API key.
+    # Use MOCO::Session.create(subdomain:, email:, password:) to exchange
+    # credentials for an API key without a Client.
+    def session
+      @session ||= Session.new(self)
+    end
+
     # Reports namespace for read-only report endpoints
     def reports
       @reports ||= ReportsProxy.new(self)

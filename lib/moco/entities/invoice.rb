@@ -90,21 +90,10 @@ module MOCO
       self
     end
 
-    # Get attachments for this invoice
+    # Fetches attachments for this invoice as a NestedCollectionProxy.
+    # Supports .all, .find(id), .create(attachment: { filename:, base64: }), and .destroy.
     def attachments
-      client.get("invoices/#{id}/attachments")
-    end
-
-    # Add an attachment to the invoice
-    def add_attachment(file_data)
-      client.post("invoices/#{id}/attachments", file_data)
-      self
-    end
-
-    # Delete an attachment from the invoice
-    def delete_attachment(attachment_id)
-      client.delete("invoices/#{id}/attachments/#{attachment_id}")
-      self
+      MOCO::NestedCollectionProxy.new(client, self, :attachments, "InvoiceAttachment")
     end
 
     # Fetches payments for this invoice

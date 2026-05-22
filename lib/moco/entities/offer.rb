@@ -85,21 +85,10 @@ module MOCO
       reload
     end
 
-    # Get attachments for this offer
+    # Fetches attachments for this offer as a NestedCollectionProxy.
+    # Supports .all, .find(id), .create(attachment: { filename:, base64: }), and .destroy.
     def attachments
-      client.get("offers/#{id}/attachments")
-    end
-
-    # Add an attachment to the offer
-    def add_attachment(file_data)
-      client.post("offers/#{id}/attachments", file_data)
-      self
-    end
-
-    # Delete an attachment from the offer
-    def delete_attachment(attachment_id)
-      client.delete("offers/#{id}/attachments/#{attachment_id}")
-      self
+      MOCO::NestedCollectionProxy.new(client, self, :attachments, "OfferAttachment")
     end
 
     # Associations

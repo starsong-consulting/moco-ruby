@@ -2,6 +2,24 @@
 
 ## [Unreleased]
 
+### Added
+- New entities to cover remaining MOCO API v1 resources: `LetterPaper`
+  (read-only letterhead listing), `InvoiceAttachment`, `OfferAttachment`,
+  and `Session` (API key exchange/verification).
+- `MOCO::Session.create(subdomain:, email:, password:)` exchanges credentials
+  for an API key without requiring an existing `Client`.
+- `moco.session.verify` confirms the configured API key and returns the user
+  identity.
+
+### Changed
+- `Invoice#attachments` and `Offer#attachments` now return a
+  `NestedCollectionProxy` of typed `InvoiceAttachment` / `OfferAttachment`
+  entities, replacing the previous raw `add_attachment` / `delete_attachment`
+  helpers. Use `invoice.attachments.create(attachment: { filename:, base64: })`
+  and `invoice.attachments.find(id).destroy` instead.
+- Documentation URLs updated from `hundertzehn.github.io/mocoapp-api-docs`
+  (legacy) to `docs.mocoapp.com/api/docs/v1` (current OpenAPI reference).
+
 ## [1.2.0] - 2026-01-14
 
 ### Added

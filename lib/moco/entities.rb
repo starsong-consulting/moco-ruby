@@ -44,7 +44,7 @@ module MOCO
     end
   end
 
-  # https://hundertzehn.github.io/mocoapp-api-docs/sections/projects.html
+  # https://docs.mocoapp.com/api/docs/v1#tag/projects.html
   # @deprecated Use MOCO::Project from entities/project.rb instead
   class Project < BaseEntity
     attr_accessor :id, :active, :name, :customer, :tasks
@@ -54,7 +54,7 @@ module MOCO
     end
   end
 
-  # https://hundertzehn.github.io/mocoapp-api-docs/sections/project_tasks.html
+  # https://docs.mocoapp.com/api/docs/v1#tag/project_tasks.html
   # @deprecated Use MOCO::Task from entities/task.rb instead
   class Task < BaseEntity
     attr_accessor :id, :active, :name, :project_id, :billable
@@ -64,7 +64,7 @@ module MOCO
     end
   end
 
-  # https://hundertzehn.github.io/mocoapp-api-docs/sections/activities.html
+  # https://docs.mocoapp.com/api/docs/v1#tag/activities.html
   # @deprecated Use MOCO::Activity from entities/activity.rb instead
   class Activity < BaseEntity
     attr_accessor :id, :active, :date, :description, :project, :task, :seconds, :hours, :billable, :billed, :user,
@@ -79,13 +79,13 @@ module MOCO
     end
   end
 
-  # https://hundertzehn.github.io/mocoapp-api-docs/sections/companies.html
+  # https://docs.mocoapp.com/api/docs/v1#tag/companies.html
   # @deprecated Use MOCO::Company from entities/company.rb instead
   class Customer < BaseEntity
     attr_accessor :id, :name
   end
 
-  # https://hundertzehn.github.io/mocoapp-api-docs/sections/users.html
+  # https://docs.mocoapp.com/api/docs/v1#tag/users.html
   # @deprecated Use MOCO::User from entities/user.rb instead
   class User < BaseEntity
     attr_accessor :id, :firstname, :lastname

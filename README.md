@@ -2,7 +2,7 @@
 
 [![Gem Version](https://badge.fury.io/rb/moco-ruby.svg)](https://badge.fury.io/rb/moco-ruby)
 
-A Ruby Gem to interact with the [MOCO API](https://hundertzehn.github.io/mocoapp-api-docs/). This gem provides a modern, Ruby-esque interface (`MOCO::Client`) for interacting with the MOCO API.
+A Ruby Gem to interact with the [MOCO API](https://docs.mocoapp.com/api/docs/v1). This gem provides a modern, Ruby-esque interface (`MOCO::Client`) for interacting with the MOCO API.
 
 ## Installation
 
@@ -176,6 +176,47 @@ profile = moco.profile
 puts "Logged in as: #{profile.firstname} #{profile.lastname}"
 ```
 
+### Sessions
+
+Exchange email/password for an API key, or verify an existing key:
+
+```ruby
+# Exchange credentials for an API key (no Client needed)
+session = MOCO::Session.create(
+  subdomain: "your-subdomain",
+  email: "you@example.com",
+  password: "secret"
+)
+api_key = session["api_key"]
+
+# Verify the configured API key for an existing client
+identity = moco.session.verify
+puts "Authenticated as user #{identity['id']} (#{identity['uuid']})"
+```
+
+### Invoice / Offer Attachments
+
+Attachments are nested under the parent document and use base64-encoded uploads:
+
+```ruby
+require "base64"
+
+invoice = moco.invoices.find(123)
+invoice.attachments.all
+invoice.attachments.create(
+  attachment: {
+    filename: "appendix.pdf",
+    base64: Base64.strict_encode64(File.read("appendix.pdf"))
+  }
+)
+invoice.attachments.find(42).destroy
+
+# Offer attachments work the same way:
+moco.offers.find(123).attachments.create(
+  attachment: { filename: "quote-details.pdf", base64: ... }
+)
+```
+
 ### Reports
 
 Access read-only report endpoints:
@@ -212,9 +253,12 @@ The gem supports all MOCO API entities with a Ruby-esque interface:
 `InvoiceBookkeepingExport`, `PurchaseBookkeepingExport`
 
 **Nested Resources:**
-`Employment`, `WorkTimeAdjustment`, `ProjectContract`, `PaymentSchedule`, `RecurringExpense`, `InvoicePayment`, `InvoiceReminder`, `OfferApproval`
+`Employment`, `WorkTimeAdjustment`, `ProjectContract`, `PaymentSchedule`, `RecurringExpense`, `InvoicePayment`, `InvoiceReminder`, `OfferApproval`, `InvoiceAttachment`, `OfferAttachment`
 
-Access them via the client using their plural, snake_case names (e.g., `moco.planning_entries`, `moco.vat_code_sales`).
+**Misc:**
+`LetterPaper` (read-only), `Session` (for API key exchange/verification)
+
+Access them via the client using their plural, snake_case names (e.g., `moco.planning_entries`, `moco.vat_code_sales`, `moco.letter_papers`). Attachments are accessed via the parent: `invoice.attachments`, `offer.attachments`.
 
 ## Utilities
 

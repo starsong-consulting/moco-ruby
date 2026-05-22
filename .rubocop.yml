@@ -16,6 +16,7 @@ Naming/MethodParameterName:
   - a
   - b
   - id
+  - to
 
 Layout/LineLength:
   Max: 130
